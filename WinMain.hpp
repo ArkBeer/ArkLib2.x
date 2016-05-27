@@ -1,6 +1,5 @@
 #pragma once
 namespace Ark {
-	template<typename T>
 	class WinClass {
 		static const auto Create_WndClassEx() {
 			WNDCLASSEX wex;
@@ -24,76 +23,14 @@ namespace Ark {
 		WNDCLASSEX WndClass_Ex;
 		WinMain_Arguments WinMain_Arg;
 		static WinClass* ptr;
-		HWND hWnd;
-		bool EndFlag;
-		T& Draw_Struct;
-
-		template<typename U>
-		void Begin_Draw_(...) {}
-		template<typename U>
-		void Begin_Draw_(typename U::type) { Draw_Struct.Begin_Draw(hWnd); }
-
-		template<typename U>
-		void End_Draw_(...) {}
-		template<typename U>
-		void End_Draw_(typename U::type) { Draw_Struct.End_Draw(); }
-
-		template<typename U>
-		void Draw_Clear_(...) {}
-		template<typename U>
-		void Draw_Clear_(COLORREF color, typename U::type) { Draw_Struct.Draw_Clear(color); }
-
-		template<typename U>
-		void Draw_String_(...) {}
-		template<typename U>
-		void Draw_String_(const float x, const float y, LPCTSTR lp, COLORREF color, const float f, const float size, typename U::type) { Draw_Struct.Draw_String(x, y, lp, color, f, size); }
-
-		template<typename U>
-		void Draw_Line_(...) {}
-		template<typename U>
-		void Draw_Line_(const float x1, const float y1, const float x2, const float y2, COLORREF color, const float f, const float size, typename U::type) { Draw_Struct.Draw_Line(x1, y1, x2, y2, color, f, size); }
-
-		template<typename U>
-		void Draw_Rectangle_(...) {}
-		template<typename U>
-		void Draw_Rectangle_(const float x1, const float y1, const float x2, const float y2, COLORREF color, const float f, typename U::type) { Draw_Struct.Draw_Rectangle(x1, y1, x2, y2, color, f); }
-		template<typename U>
-		void Draw_Rectangle_(const float x1, const float y1, const float x2, const float y2, COLORREF color, const float f, const float size, typename U::type) { Draw_Struct.Draw_Rectangle(x1, y1, x2, y2, color, f, size); }
-
-		template<typename U>
-		void Draw_Round_Rectangle_(...) {}
-		template<typename U>
-		void Draw_Round_Rectangle_(const float x1, const float y1, const float x2, const float y2, const float rx, const float ry, COLORREF color, const float f, typename U::type) { Draw_Struct.Draw_Round_Rectangle(x1, y1, x2, y2, rx, ry, color, f); }
-		template<typename U>
-		void Draw_Round_Rectangle_(const float x1, const float y1, const float x2, const float y2, const float rx, const float ry, COLORREF color, const float f, const float size, typename U::type) { Draw_Struct.Draw_Round_Rectangle(x1, y1, x2, y2, rx, ry, color, f, size); }
-
-		template<typename U>
-		void Draw_Ellipse_(...) {}
-		template<typename U>
-		void Draw_Ellipse_(const float x1, const float y1, const float rx, const float ry, COLORREF color, const float f, typename U::type) { Draw_Struct.Draw_Ellipse(x1, y1, rx, ry, color, f); }
-		template<typename U>
-		void Draw_Ellipse_(const float x1, const float y1, const float rx, const float ry, COLORREF color, const float f, const float size, typename U::type) { Draw_Struct.Draw_Ellipse(x1, y1, rx, ry, color, f, size); }
-
-		template<typename U>
-		auto Set_Bitmap_(...) { return nullptr; }
-		template<typename U>
-		auto Set_Bitmap_(LPCTSTR image, typename U::type) { return Draw_Struct.Set_Bitmap(image); }
-
-		template<typename U>
-		void Draw_Bitmap_(...) {}
-		template<typename U>
-		void Draw_Bitmap_(typename U::Bitmap_type& bitmap, const float x1, const float y1, const float x2, const float y2, const float bx1, const float by1, const float bx2, const float by2, const float f) { Draw_Struct.Draw_Bitmap(bitmap, x1, y1, x2, y2, bx1, by1, bx2, by2, f); }
-
-		template<typename U>
-		void Draw_Shape_(...) {}
-		template<typename U>
-		void Draw_Shape_(const U& sp, COLORREF color, const double f, const double size) { Draw_Struct.Draw_Shape(sp, color, f, size); }
+		static HWND hWnd;
+		static bool endflag;
 
 	public:
-		WinClass(HINSTANCE hinst, HINSTANCE hpinst, LPSTR lp, int i, T& t) :WinClass(hinst, hpinst, lp, i, Create_WndClassEx(), t) {}
-		WinClass(HINSTANCE hinst, HINSTANCE hpinst, LPSTR lp, int i, WNDCLASSEX wex, T& t) :Draw_Struct(t) {
+		WinClass(HINSTANCE hinst, HINSTANCE hpinst, LPSTR lp, int i) :WinClass(hinst, hpinst, lp, i, Create_WndClassEx()) {}
+		WinClass(HINSTANCE hinst, HINSTANCE hpinst, LPSTR lp, int i, WNDCLASSEX wex)  {
 			ptr = this;
-			EndFlag = false;
+			endflag = false;
 			WinMain_Arg.hInstance = hinst;
 			WinMain_Arg.hPrevInstance = hpinst;
 			WinMain_Arg.lpCmdLine = lp;
@@ -126,7 +63,7 @@ namespace Ark {
 			}
 			case WM_DESTROY:
 				PostQuitMessage(0);
-				EndFlag = true;
+				endflag = true;
 				return 0;
 			default:
 				return DefWindowProc(hwnd, msg, wParam, lParam);
@@ -166,7 +103,6 @@ namespace Ark {
 			bf.SourceConstantAlpha = 105;
 			RECT rc;
 			GetClientRect(hWnd, &rc);
-			//SIZE size={rc.right-rc.left,rc.bottom-rc.top};
 			SIZE size = { 800,600 };
 			UPDATELAYEREDWINDOWINFO info{};
 			info.cbSize = sizeof(UPDATELAYEREDWINDOWINFO);
@@ -179,50 +115,24 @@ namespace Ark {
 			return 0;
 
 		}
-		void Boot() {
+		static const bool End_Flag(){
 			MSG msg;
-			while (!EndFlag) {
-				if (PeekMessage(&msg, hWnd, 0, 0, PM_REMOVE)) {
-					if (msg.message != WM_QUIT) {
-						TranslateMessage(&msg);
-						DispatchMessage(&msg);
-					}
-					else break;
+			if (PeekMessage(&msg, hWnd, 0, 0, PM_REMOVE)) {
+				if (msg.message != WM_QUIT) {
+					TranslateMessage(&msg);
+					DispatchMessage(&msg);
 				}
-				Main();
+				else Exit();
 			}
+			return endflag; 
 		}
-		int Main() {
-			return 0;
+		static const bool Exit() { endflag = true; return endflag; }
+		static const auto Get_hWnd() {
+			return hWnd;
 		}
-		void Begin_Draw() { Begin_Draw_<T>(nullptr); }
-
-		void End_Draw() { End_Draw_<T>(nullptr); }
-
-		void Draw_Clear(COLORREF color) { Draw_Clear_<T>(color, nullptr); }
-
-		void Draw_String(const float x, const float y, LPCTSTR lp, COLORREF color, const float f, const float size) { Draw_String_<T>(x, y, lp, color, f, size, nullptr); }
-
-		void Draw_Line(const float x1, const float y1, const float x2, const float y2, COLORREF color, const float f, const float size) { Draw_Line_<T>(x1, y1, x2, y2, color, f, size, nullptr); }
-
-		void Draw_Rectangle(const float x1, const float y1, const float x2, const float y2, COLORREF color, const float f) { Draw_Rectangle_<T>(x1, y1, x2, y2, color, f, nullptr); }
-		void Draw_Rectangle(const float x1, const float y1, const float x2, const float y2, COLORREF color, const float f, const float size) { Draw_Rectangle_<T>(x1, y1, x2, y2, color, f, size, nullptr); }
-
-		void Draw_Round_Rectangle(const float x1, const float y1, const float x2, const float y2, const float rx, const float ry, COLORREF color, const float f) { Draw_Round_Rectangle_<T>(x1, y1, x2, y2, rx, ry, color, f, nullptr); }
-		void Draw_Round_Rectangle(const float x1, const float y1, const float x2, const float y2, const float rx, const float ry, COLORREF color, const float f, const float size) { Draw_Round_Rectangle_<T>(x1, y1, x2, y2, rx, ry, color, f, size, nullptr); }
-
-		void Draw_Ellipse(const float x1, const float y1, const float rx, const float ry, COLORREF color, const float f) { Draw_Ellipse_<T>(x1, y1, rx, ry, color, f, nullptr); }
-		void Draw_Ellipse(const float x1, const float y1, const float rx, const float ry, COLORREF color, const float f, const float size) { Draw_Ellipse_<T>(x1, y1, rx, ry, color, f, size, nullptr); }
-
-		auto Set_Bitmap(LPCTSTR image) { return Set_Bitmap_<T>(image, nullptr); }
-
-		template<typename U>
-		void Draw_Bitmap(typename U& bitmap, const float x1, const float y1, const float x2, const float y2, const float bx1, const float by1, const float bx2, const float by2, const float f) { Draw_Bitmap_<T>(bitmap, x1, y1, x2, y2, bx1, by1, bx2, by2, f); }
-
-		template<typename U>
-		void Draw_Shape(const U& sp, COLORREF color, const double f, const double size) { Draw_Shape_<U>(sp, color, f, size); }
-
+		int Boot();
 	};
-	template<typename T>
-	WinClass<T>* WinClass<T>::ptr = nullptr;
+	WinClass* WinClass::ptr = nullptr;
+	HWND WinClass::hWnd = nullptr;
+	bool WinClass::endflag = false;
 }

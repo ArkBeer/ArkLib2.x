@@ -3,7 +3,8 @@
 #include<thread>
 namespace Ark {
 	class Frame_Rate {
-		std::chrono::time_point<std::chrono::steady_clock> Start_Time;
+		using timepoint = std::chrono::time_point < std::chrono::steady_clock >;
+		timepoint Start_Time;
 		double passed() {
 			auto end = std::chrono::steady_clock::now();
 			auto passed = end - Start_Time;
@@ -21,8 +22,12 @@ namespace Ark {
 			Start_Time = std::chrono::steady_clock::now();
 		}
 		template<typename T>
-		auto Duration(std::chrono::time_point<std::chrono::steady_clock> s) {
+		auto Duration(timepoint s) {
 			return std::chrono::duration_cast<std::chrono::duration<T>>(std::chrono::steady_clock::now() - s).count();
+		}
+		template<typename T>
+		auto perDuration(timepoint s) {
+			return static_cast<T>(1/std::chrono::duration_cast<std::chrono::duration<T>>(std::chrono::steady_clock::now() - s).count());
 		}
 
 	};
