@@ -13,7 +13,8 @@ Ark::Frame_Rate fps;
 Ark::D2D1_1 d1;
 Ark::D2D1_0 d0;
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-	Ark::WinClass wc(hInstance,hPrevInstance,lpCmdLine,nCmdShow);
+	Ark::TstringStream tstr;
+	Ark::WinClass wc(hInstance);
 	wc.Boot();
 	return 0;
 }

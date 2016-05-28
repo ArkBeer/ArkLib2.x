@@ -8,7 +8,7 @@
 #include<tchar.h>
 
 #include<Windows.h>
-
+#include"Tstring.hpp"
 #include"WinMain.hpp"
 #include"Key.hpp"
 #include"Mouse.hpp"
@@ -19,7 +19,3 @@
 #include"Draw_Class.hpp"
 #include"D2D1_0.hpp"
 #include"D2D1_1.hpp"
-namespace Ark {
-	using Tstring = std::basic_string<TCHAR>;
-	using TstringStream = std::basic_stringstream<TCHAR>;
-}
