@@ -69,26 +69,27 @@ namespace Ark {
 				return DefWindowProc(hwnd, msg, wParam, lParam);
 			}
 		}
-		static bool Set_Window_Elements(int index, LONG lp) {
+		static const bool Set_Window_Elements(int index, LONG lp) {
 			if (SetWindowLongPtr(hWnd, index, lp))return true;
 			return false;
 		}
-		static bool Set_WndClass_Elements(int index, LONG lp) {
+		static const bool Set_WndClassEx_Elements(int index, LONG lp) {
 			if (SetClassLongPtr(hWnd, index, lp))return true;
 			return false;
 		}
-		static bool Set_Window_Pos(HWND z, int x, int y, int cx, int cy, UINT uf = SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW) {
+		static const bool Set_Window_Pos(HWND z, int x, int y, int cx, int cy, UINT uf = SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW) {
 			if (SetWindowPos(hWnd, z, x, y, cx, cy, uf))return true;
 			return false;
 		}
-		static void Set_Window_Title(LPCTSTR lp) {
-			SetWindowText(hWnd, lp);
+		static const bool Set_Window_Title(LPCTSTR lp) {
+			if(SetWindowText(hWnd, lp))return true;
+			return false;
 		}
-		static bool Set_Window_Position(int x, int y) {
+		static const bool Set_Window_Position(int x, int y) {
 			if (SetWindowPos(hWnd, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW))return true;
 			return false;
 		}
-		static bool Set_Window_Size(int hx, int hy) {
+		static const bool Set_Window_Size(int hx, int hy) {
 			RECT rc;
 			if (!SetWindowPos(hWnd, nullptr, 0, 0, hx, hy, SWP_NOMOVE | SWP_NOZORDER | SWP_SHOWWINDOW))return false;
 			GetClientRect(hWnd, &rc);
@@ -97,7 +98,8 @@ namespace Ark {
 			if (SetWindowPos(hWnd, nullptr, 0, 0, hx + fx, hy + fy, SWP_NOMOVE | SWP_NOZORDER | SWP_SHOWWINDOW))return true;
 			return false;
 		}
-		bool Set_Transparent(const COLORREF color, const int alpha, const DWORD dw) {
+		//[WIP]
+		/*bool Set_Transparent(const COLORREF color, const int alpha, const DWORD dw) {
 			BLENDFUNCTION bf{};
 			bf.AlphaFormat = AC_SRC_ALPHA;
 			bf.SourceConstantAlpha = 105;
@@ -114,7 +116,7 @@ namespace Ark {
 			UpdateLayeredWindowIndirect(hWnd, &info);
 			return 0;
 
-		}
+		}*/
 		static const bool End_Flag() {
 			MSG msg;
 			if (PeekMessage(&msg, hWnd, 0, 0, PM_REMOVE)) {
@@ -127,9 +129,7 @@ namespace Ark {
 			return endflag;
 		}
 		static const bool Exit() { endflag = true; return endflag; }
-		static const auto Get_hWnd() {
-			return hWnd;
-		}
+		static const auto Get_hWnd() {return hWnd;}
 		int Boot();
 	};
 	WinClass* WinClass::ptr = nullptr;

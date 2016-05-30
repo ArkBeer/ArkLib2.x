@@ -6,7 +6,7 @@ namespace Ark {
 		Key() {
 			key_arr.fill(false);
 		}
-		bool Key_Check(const int key, const bool cond) {
+		const bool Key_Check(const int key, const bool cond) {
 			if (GetAsyncKeyState(key)) {
 				bool result;
 				result = cond ? true : (cond == key_arr[key] ? true : false);

@@ -59,7 +59,7 @@ namespace Ark {
 			}
 			return true;
 		}
-		int Set_RGB(COLORREF& color) {
+		const int Set_RGB(COLORREF& color) {
 			int i = color % 0x100;
 			color /= 0x100;
 			return i;

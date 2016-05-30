@@ -5,12 +5,12 @@ namespace Ark {
 	class Frame_Rate {
 		using timepoint = std::chrono::time_point < std::chrono::steady_clock >;
 		timepoint Start_Time;
-		double passed() {
+		const double passed() {
 			auto end = std::chrono::steady_clock::now();
 			auto passed = end - Start_Time;
 			return std::chrono::duration_cast<std::chrono::duration<double>>(passed).count();
 		}
-		double needed() {
+		const double needed() {
 			return passed() - static_cast<double>(1 / Fps);
 		}
 	public:
