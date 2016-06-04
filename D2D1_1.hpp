@@ -25,6 +25,12 @@ namespace Ark {
 		Microsoft::WRL::ComPtr<IDWriteFactory1> IDWFactory;
 		Microsoft::WRL::ComPtr<IDWriteTextFormat> IDWFormat;
 		Microsoft::WRL::ComPtr<ID2D1Factory1> D2DFactory;
+		RECT size;
+		const bool CompareRect(const RECT& f, const RECT& s) {
+			if (f.bottom == s.bottom && f.left == s.left && f.right == s.right && f.top == s.top)return true;
+			else return false;
+		}
+
 		bool Create_D2D_Resource(HWND hwnd) {
 			if (!D2DContext || !DXGISwapChain) {
 				D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, IID_PPV_ARGS(&D2DFactory));
@@ -35,6 +41,9 @@ namespace Ark {
 				Microsoft::WRL::ComPtr<IDXGIAdapter> DXGIAdapter;
 				Microsoft::WRL::ComPtr<IDXGIFactory2> DXGIFactory;
 				Microsoft::WRL::ComPtr<IDXGISurface> DXGISurface;
+				
+				GetClientRect(hwnd, &size);
+
 				D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_SINGLETHREADED, nullptr, 0, D3D11_SDK_VERSION, &D3D11Device, nullptr, nullptr);
 				D3D11Device.As(&DXGIDevice);
 				DXGIDevice->GetAdapter(&DXGIAdapter);
@@ -86,14 +95,19 @@ namespace Ark {
 		void Begin_Draw(HWND hwnd) {
 			if (Create_D2D_Resource(hwnd))D2DContext->BeginDraw();
 		}
-		void End_Draw() {
-			if (D2DContext->EndDraw() == D2DERR_RECREATE_TARGET) {
+		void End_Draw(HWND hwnd) {
+			RECT rect;
+			GetClientRect(hwnd, &rect);
+
+			if (D2DContext->EndDraw() == D2DERR_RECREATE_TARGET||!CompareRect(size,rect)) {
 				D2DContext.ReleaseAndGetAddressOf();
 				D2DSCBrush.ReleaseAndGetAddressOf();
 				DXGISwapChain.ReleaseAndGetAddressOf();
 			}
-			DXGI_PRESENT_PARAMETERS parameters = {};
-			DXGISwapChain->Present1(1, 0, &parameters);
+			else {
+				DXGI_PRESENT_PARAMETERS parameters = {};
+				DXGISwapChain->Present1(1, 0, &parameters);
+			}
 		}
 		void Draw_Clear(COLORREF color) {
 			int r, g, b;

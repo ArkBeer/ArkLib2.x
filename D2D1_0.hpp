@@ -18,20 +18,30 @@ namespace Ark {
 		CComQIPtr<ID2D1SolidColorBrush> D2DSCBrush;
 		CComQIPtr<IDWriteFactory> D2DWFactory;
 		CComQIPtr<IDWriteTextFormat> D2DWFormat;
+		RECT size;
+		const bool CompareRect(const RECT& f,const RECT& s){
+			if (f.bottom == s.bottom && f.left == s.left && f.right == s.right && f.top == s.top) return true;
+			else return false;
+		}
 		bool Create_D2D_Resource(HWND hwnd) {
 			if (!D2DTarget) {
-				RECT rect;
-				GetClientRect(hwnd, &rect);
+				GetClientRect(hwnd, &size);
 				HRESULT hr = D2DFactory->CreateHwndRenderTarget(
 					D2D1::RenderTargetProperties(),
 					D2D1::HwndRenderTargetProperties(hwnd,
-						D2D1::Size(static_cast<UINT>(rect.right - rect.left), static_cast<UINT>(rect.bottom - rect.top))),
+						D2D1::Size(static_cast<UINT>(size.right - size.left), static_cast<UINT>(size.bottom - size.top))),
 					&D2DTarget);
 				if (FAILED(hr))return false;
 			}
 			if (!D2DSCBrush) {
 				HRESULT hr = D2DTarget->CreateSolidColorBrush(D2D1::ColorF(RGB(0, 0, 0), 1.0f), &D2DSCBrush);
 				if (FAILED(hr))return false;
+			}
+			RECT rect;
+			GetClientRect(hwnd, &rect);
+			if (!CompareRect(size,rect)) {
+				D2DTarget->Resize(D2D1::Size(static_cast<UINT>(rect.right - rect.left), static_cast<UINT>(rect.bottom - rect.top)));
+				size = rect;
 			}
 			return true;
 		}
