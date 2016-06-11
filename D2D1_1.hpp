@@ -32,6 +32,13 @@ namespace Ark {
 		}
 
 		bool Create_D2D_Resource(HWND hwnd) {
+			RECT rect;
+			GetClientRect(hwnd, &rect);
+			if (!CompareRect(size,rect)) {
+				D2DContext.ReleaseAndGetAddressOf();
+				D2DSCBrush.ReleaseAndGetAddressOf();
+				DXGISwapChain.ReleaseAndGetAddressOf();
+			}
 			if (!D2DContext || !DXGISwapChain) {
 				D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, IID_PPV_ARGS(&D2DFactory));
 				Microsoft::WRL::ComPtr<ID2D1Device> D2DDevice;
@@ -95,11 +102,9 @@ namespace Ark {
 		void Begin_Draw(HWND hwnd) {
 			if (Create_D2D_Resource(hwnd))D2DContext->BeginDraw();
 		}
-		void End_Draw(HWND hwnd) {
-			RECT rect;
-			GetClientRect(hwnd, &rect);
+		void End_Draw() {
 
-			if (D2DContext->EndDraw() == D2DERR_RECREATE_TARGET||!CompareRect(size,rect)) {
+			if (D2DContext->EndDraw() == D2DERR_RECREATE_TARGET) {
 				D2DContext.ReleaseAndGetAddressOf();
 				D2DSCBrush.ReleaseAndGetAddressOf();
 				DXGISwapChain.ReleaseAndGetAddressOf();

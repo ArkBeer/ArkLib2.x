@@ -22,14 +22,13 @@ namespace Ark {
 			T* operator->()const { return ptr; }
 			T* Get()const { return ptr; }
 		};
-		Microsoft::WRL::ComPtr<IXAudio2> IAudio;
+		Microsoft::WRL::ComPtr<IXAudio2> XAudio;
 		Com<IXAudio2MasteringVoice> MVoice;
 		Com<IXAudio2SourceVoice> SVoice;
 		Audio(){
-		IAudio.Get();
 			CoInitialize(nullptr);
-			XAudio2Create(&IAudio);
-			IAudio->CreateMasteringVoice(&MVoice);
+			if(FAILED(XAudio2Create(&XAudio)))OutputDebugString(_T("faild xaudio crate\n"));
+			if (FAILED(XAudio->CreateMasteringVoice(&MVoice)))OutputDebugString(_T("failed mastering create\n"));
 		}
 		~Audio(){
 			CoUninitialize();
