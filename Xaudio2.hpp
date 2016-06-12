@@ -68,14 +68,18 @@ namespace Ark {
 				buf.pAudioData = &data[0];
 				buf.Flags = XAUDIO2_END_OF_STREAM;
 			}
+			WavSource(const LPCTSTR lp, Audio& a):WavSource(lp){
+				Set_Audio(a);
+			}
 			~WavSource() {
 				if (svoice.Get() != nullptr)svoice->Stop();
 			}
 			void Set_Audio(Audio& a) {
 				a.XAudio->CreateSourceVoice(&svoice, &wavex);
-				svoice->SubmitSourceBuffer(&buf);
 			}
-			void Start() {
+			void Play(const double s=0) {
+				buf.PlayBegin = wavex.nSamplesPerSec*s;
+				svoice->SubmitSourceBuffer(&buf);
 				svoice->Start();
 			}
 			void Stop() {

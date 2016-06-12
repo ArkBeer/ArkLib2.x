@@ -15,15 +15,13 @@ Ark::Audio au;
 Ark::D2D1_0 d0;
 Ark::D2D1_1 d1;
 Ark::D3D11 d3;
-Ark::Audio::WavSource ws(_T("test.wav"));
+Ark::Audio::WavSource ws(_T("test.wav"),au);
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-	//Ark::Audio::WavSource w(_T("test.wav"));
 	Ark::WinClass wc(hInstance);
 	wc.Set_Window_Title(_T("title"));
 	wc.Set_Window_Elements(GWL_STYLE, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX|WS_THICKFRAME);
 	wc.Set_Window_Size(300,300);
-	ws.Set_Audio(au);
-	ws.Start();
+	ws.Play();
 	wc.Boot();
 
 	return 0;
