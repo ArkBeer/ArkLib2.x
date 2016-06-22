@@ -6,8 +6,8 @@
 #pragma comment(lib,"d3d11.lib")
 namespace Ark {
 	class D3D11 {
-		Microsoft::WRL::ComPtr<ID3D11Device> D3D11Device;
-		Microsoft::WRL::ComPtr<ID3D11DeviceContext> D3D11DevContext;
+		Microsoft::WRL::ComPtr<ID3D11Device1> D3D11Device;
+		Microsoft::WRL::ComPtr<ID3D11DeviceContext1> D3D11DevContext;
 		Microsoft::WRL::ComPtr<IDXGISwapChain1> DXGISwapChain;
 		Microsoft::WRL::ComPtr<ID3D11RenderTargetView> RenderTargetView;
 		Microsoft::WRL::ComPtr<ID3D11DepthStencilView> DepthStencilView;
@@ -48,10 +48,14 @@ namespace Ark {
 				DXGISwapChain.ReleaseAndGetAddressOf();
 				RenderTargetView.ReleaseAndGetAddressOf();
 				//ShaderResourceView.ReleaseAndGetAddressOf();
+				size = rect;
 			}
 			if (!D3D11Device || !D3D11DevContext) {
-				GetClientRect(hwnd, &size);
-				D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_SINGLETHREADED, nullptr, 0, D3D11_SDK_VERSION, &D3D11Device, nullptr, &D3D11DevContext);
+				Microsoft::WRL::ComPtr<ID3D11Device> device;
+				Microsoft::WRL::ComPtr<ID3D11DeviceContext> context;
+				D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_SINGLETHREADED, nullptr, 0, D3D11_SDK_VERSION, &device, nullptr, &context);
+				device.As(&D3D11Device);
+				context.As(&D3D11DevContext);
 			}
 			if(!DXGISwapChain||!RenderTargetView){
 				Microsoft::WRL::ComPtr<IDXGIDevice1> DXGIDevice;
@@ -89,7 +93,6 @@ namespace Ark {
 		void End_Draw() {
 			DXGISwapChain->Present(0, 0);
 		}
-
 		void Draw_Clear(COLORREF color,const float f){
 			auto it = Convert_RGBA<float>(color, f);
 			D3D11DevContext->ClearRenderTargetView(RenderTargetView.Get(), it);
