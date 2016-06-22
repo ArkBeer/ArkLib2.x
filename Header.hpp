@@ -21,3 +21,9 @@
 #include"D2D1_1.hpp"
 #include"D3D11.hpp"
 #include"Xaudio2.hpp"
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+	Ark::WinClass wc(hInstance);
+	wc.Boot();
+
+	return 0;
+}
