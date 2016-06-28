@@ -63,7 +63,12 @@ namespace Ark {
 			if (!D3D11Device || !D3D11DevContext) {
 				Microsoft::WRL::ComPtr<ID3D11Device> Device;
 				Microsoft::WRL::ComPtr<ID3D11DeviceContext> DevContext;
-				D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, D3D11_CREATE_DEVICE_DEBUG | D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_SINGLETHREADED, nullptr, 0, D3D11_SDK_VERSION, &Device, nullptr, &DevContext);
+#ifdef _DEBUG
+				const auto flags = D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_DEBUG | D3D11_CREATE_DEVICE_SINGLETHREADED;
+#else
+				const auto flags = D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_SINGLETHREADED;
+#endif
+				D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, flags, nullptr, 0, D3D11_SDK_VERSION, &Device, nullptr, &DevContext);
 				Device.As(&D3D11Device);
 				DevContext.As(&D3D11DevContext);
 				
@@ -117,6 +122,9 @@ namespace Ark {
 					{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 					{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 				} };
+				D3D11Device->CreateInputLayout(InputLayout.data(),InputLayout.size(),nullptr,sizeof(nullptr),&D3D11InputLayout);
+				D3D11Device->CreateVertexShader(nullptr,sizeof(nullptr),nullptr,&D3D11VertexShader);
+				D3D11Device->CreatePixelShader(nullptr,sizeof(nullptr),nullptr,&D3D11PixelShader);
 			}
 		}
 	public:
@@ -131,9 +139,29 @@ namespace Ark {
 			auto clr = Convert_RGBA(color,alpha);
 			D3D11DevContext->ClearRenderTargetView(D3D11RenderTargetView.Get(),clr);
 			D3D11DevContext->ClearDepthStencilView(D3D11DepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
+			D3D11DevContext->IASetInputLayout(D3D11InputLayout.Get());
+			D3D11DevContext->VSSetShader(D3D11VertexShader.Get(),nullptr,0);
+			D3D11DevContext->PSSetShader(D3D11PixelShader.Get(),nullptr,0);
+			
 			const std::array<Vec3,3> vertex = { {
 				{ { 0.5f, -0.5f, 0.f },{ 1.f, 1.f, 1.f, 1.f } },{ { -0.5f, 0.5f, 0.f },{ 1.f, 1.f, 1.f, 1.f } },{ { 0.5f, 0.5f, 0.f },{ 1.f, 1.f, 1.f, 1.f } }
 				} };
+			D3D11_BUFFER_DESC desc = {};
+			desc.ByteWidth = sizeof(vertex);
+			desc.Usage = D3D11_USAGE_DEFAULT;
+			desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+			desc.StructureByteStride = sizeof(float);
+			D3D11_SUBRESOURCE_DATA sub = {};
+			sub.pSysMem = vertex.data();
+			UINT offsets = 0;
+			UINT strides = sizeof(Vec3);
+			Microsoft::WRL::ComPtr<ID3D11Buffer> buffer;
+			D3D11Device->CreateBuffer(&desc,&sub,&buffer);
+			D3D11DevContext->IASetVertexBuffers(0, 1, buffer.GetAddressOf(), &strides, &offsets);
+			D3D11DevContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			D3D11DevContext->Draw(3, 0);
+
+
 		}
 	};
 }
