@@ -6,8 +6,10 @@
 #include<random>
 #include<tuple>
 #include<tchar.h>
-
+#include<algorithm>
 #include<Windows.h>
+#undef min
+#undef max
 #include"Tstring.hpp"
 #include"WinMain.hpp"
 #include"Key.hpp"

@@ -45,7 +45,6 @@ namespace Ark {
 				FmtChunk fmtchunk;
 				DataChunk datachunk;
 			};
-			std::ifstream ifs;
 			WavFileHeader head;
 			WAVEFORMATEX wavex;
 			std::unique_ptr<std::uint8_t[]> data;
@@ -53,6 +52,7 @@ namespace Ark {
 			Com<IXAudio2SourceVoice> svoice;
 		public:
 			WavSource(const LPCTSTR lp) :head{}, wavex{}, buf{} {
+				std::ifstream ifs;
 				ifs.open(lp, std::ios::binary | std::ios::in);
 				ifs.read(reinterpret_cast<char*>(&head), sizeof(head));
 				wavex.cbSize = 0;

@@ -36,7 +36,7 @@ namespace Ark {
 			WinMain_Arg.lpCmdLine = GetCommandLine();
 			WinMain_Arg.nCmdShow = SW_SHOWDEFAULT;
 			WndClass_Ex = wex;
-			WndClass_Ex.hInstance = WinMain_Arg.hInstance;
+			WndClass_Ex.hInstance =/* WinMain_Arg.hInstance*/GetModuleHandle(nullptr);
 			WndClass_Ex.lpfnWndProc = CallProc;
 			RegisterClassEx(&WndClass_Ex);
 			hWnd = CreateWindowEx(0, WndClass_Ex.lpszClassName, _T("ArkLib"), WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX,

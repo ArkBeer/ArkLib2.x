@@ -2,6 +2,7 @@
 #include<wrl.h>
 #include<atlbase.h>
 #include<d3d11_1.h>
+#include<fstream>
 
 #pragma comment(lib,"d3d11.lib")
 namespace Ark {
@@ -24,7 +25,26 @@ namespace Ark {
 		Microsoft::WRL::ComPtr<ID3D11InputLayout> D3D11InputLayout;
 		Microsoft::WRL::ComPtr<ID3D11VertexShader> D3D11VertexShader;
 		Microsoft::WRL::ComPtr<ID3D11PixelShader> D3D11PixelShader;
-
+		std::vector<char> vs;
+		std::vector<char> ps;
+		void CreateVertexShader(const LPCTSTR lp) {
+			std::ifstream ifs;
+			ifs.open(lp, std::ios::binary | std::ios::in);
+			while (!ifs.eof()) {
+				char c;
+				ifs.read(&c, sizeof(char));
+				vs.push_back(c);
+			}
+		}
+		void CreatePixelShader(const LPCTSTR lp) {
+			std::ifstream ifs;
+			ifs.open(lp, std::ios::binary | std::ios::in);
+			while (!ifs.eof()) {
+				char c;
+				ifs.read(&c, sizeof(char));
+				ps.push_back(c);
+			}
+		}
 		const int Set_RGB(COLORREF& color) {
 			int i = color % 0x100;
 			color /= 0x100;
@@ -122,9 +142,13 @@ namespace Ark {
 					{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 					{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 				} };
-				D3D11Device->CreateInputLayout(InputLayout.data(),InputLayout.size(),nullptr,sizeof(nullptr),&D3D11InputLayout);
-				D3D11Device->CreateVertexShader(nullptr,sizeof(nullptr),nullptr,&D3D11VertexShader);
-				D3D11Device->CreatePixelShader(nullptr,sizeof(nullptr),nullptr,&D3D11PixelShader);
+
+				D3D11Device->CreateInputLayout(InputLayout.data(),InputLayout.size(),vs.data(),sizeof(vs),&D3D11InputLayout);
+				
+				CreateVertexShader(_T("vshader.cso"));
+				CreatePixelShader(_T("pshader.cso"));
+				D3D11Device->CreateVertexShader(vs.data(),sizeof(vs),nullptr,&D3D11VertexShader);
+				D3D11Device->CreatePixelShader(ps.data(),sizeof(ps),nullptr,&D3D11PixelShader);
 			}
 		}
 	public:
@@ -159,9 +183,7 @@ namespace Ark {
 			D3D11Device->CreateBuffer(&desc,&sub,&buffer);
 			D3D11DevContext->IASetVertexBuffers(0, 1, buffer.GetAddressOf(), &strides, &offsets);
 			D3D11DevContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-			D3D11DevContext->Draw(3, 0);
-
-
+			//D3D11DevContext->Draw(3, 0);
 		}
 	};
 }

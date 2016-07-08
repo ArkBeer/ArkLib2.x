@@ -8,12 +8,9 @@ namespace Ark {
 			mt = std::mt19937(rnd());
 		}
 		const int Range(const int x, const int y) {
-			if (x <= y) {
-				std::uniform_int_distribution<> rand_(x, y);
-				return rand_(mt);
-			}
-			else return -1;
+			auto it = std::minmax(x, y);
+			std::uniform_int_distribution<> rand_(it.first, it.second);
+			return rand_(mt);
 		}
-
 	};
 }
