@@ -69,10 +69,44 @@ namespace Ark {
 				return DefWindowProc(hwnd, msg, wParam, lParam);
 			}
 		}
-		static const bool Set_Window_Elements(int index, LONG lp) {
+#define SETFUNC(name,index) auto Set##name(const LONG lp){SetWindowLongPtr(hWnd, index, lp);return *this;}
+#define ADDFUNC(name,index) auto Add##name(const LONG lp){const LONG _lp=GetWindowLongPtr(hWnd,index);SetWindowLongPtr(hWnd, index, _lp | lp);return *this;}
+		SETFUNC(Style, GWL_STYLE)
+		SETFUNC(EXStyle,GWL_EXSTYLE)
+		ADDFUNC(Style,GWL_STYLE)
+		ADDFUNC(EXStyle,GWL_EXSTYLE)
+#undef SETFUNC
+#undef ADDFUNC
+
+#define SETFUNC(name,index) static auto& Set##name(const LONG lp){SetClassLongPtr(hWnd, index, lp);return *ptr;}
+#define ADDFUNC(name,index) static auto& Add##name(const LONG lp){const LONG _lp=GetClassLongPtr(hWnd,index);SetClassLongPtr(hWnd, index, _lp | lp);return *ptr;}
+		SETFUNC(Cursor,GCLP_HCURSOR)
+		SETFUNC(Icon,GCLP_HICON)
+		SETFUNC(IconSM,GCLP_HICONSM)
+		ADDFUNC(Cursor, GCLP_HCURSOR)
+		ADDFUNC(Icon, GCLP_HICON)
+		ADDFUNC(IconSM, GCLP_HICONSM)
+#undef SETFUNC
+#undef ADDFUNC
+		static auto& SetTitle(LPCTSTR lp) {
+			SetWindowText(hWnd, lp);
+			return *ptr;
+		}
+		static auto& SetSize(int hx, int hy) {
+			RECT rc;
+			SetWindowPos(hWnd, nullptr, 0, 0, hx, hy, SWP_NOMOVE | SWP_NOZORDER | SWP_SHOWWINDOW);
+			GetClientRect(hWnd, &rc);
+			const int fx = hx - (rc.right - rc.left);
+			const int fy = hy - (rc.bottom - rc.top);
+			SetWindowPos(hWnd, nullptr, 0, 0, hx + fx, hy + fy, SWP_NOMOVE | SWP_NOZORDER | SWP_SHOWWINDOW);
+			return *ptr;
+		}
+
+			static const bool Set_Window_Elements(int index, LONG lp) {
 			if (SetWindowLongPtr(hWnd, index, lp))return true;
 			return false;
 		}
+
 		static const bool Set_WndClassEx_Elements(int index, LONG lp) {
 			if (SetClassLongPtr(hWnd, index, lp))return true;
 			return false;
@@ -81,22 +115,9 @@ namespace Ark {
 			if (SetWindowPos(hWnd, z, x, y, cx, cy, uf))return true;
 			return false;
 		}
-		static const bool Set_Window_Title(LPCTSTR lp) {
-			if(SetWindowText(hWnd, lp))return true;
-			return false;
-		}
-		static const bool Set_Window_Position(int x, int y) {
-			if (SetWindowPos(hWnd, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW))return true;
-			return false;
-		}
-		static const bool Set_Window_Size(int hx, int hy) {
-			RECT rc;
-			if (!SetWindowPos(hWnd, nullptr, 0, 0, hx, hy, SWP_NOMOVE | SWP_NOZORDER | SWP_SHOWWINDOW))return false;
-			GetClientRect(hWnd, &rc);
-			const int fx = hx - (rc.right - rc.left);
-			const int fy = hy - (rc.bottom - rc.top);
-			if (SetWindowPos(hWnd, nullptr, 0, 0, hx + fx, hy + fy, SWP_NOMOVE | SWP_NOZORDER | SWP_SHOWWINDOW))return true;
-			return false;
+		static auto& SetPosition(int x, int y) {
+			SetWindowPos(hWnd, nullptr, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
+			return *ptr;
 		}
 		//[WIP]
 		/*bool Set_Transparent(const COLORREF color, const int alpha, const DWORD dw) {
@@ -130,7 +151,6 @@ namespace Ark {
 		}
 		static const bool Exit() { endflag = true; return endflag; }
 		static const auto Get_hWnd() {return hWnd;}
-		int Boot();
 	};
 	WinClass* WinClass::ptr = nullptr;
 	HWND WinClass::hWnd = nullptr;
