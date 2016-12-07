@@ -45,24 +45,24 @@ namespace Ark {
 				ps.push_back(c);
 			}
 		}
-		const int Set_RGB(COLORREF& color) {
+		const int SetRGB(COLORREF& color) {
 			int i = color % 0x100;
 			color /= 0x100;
 			return i;
 		}
-		void Convert_RGB(int& r, int& g, int& b, COLORREF& color) {
-			r = Set_RGB(color);
-			g = Set_RGB(color);
-			b = Set_RGB(color);
+		void ConvertRGB(int& r, int& g, int& b, COLORREF& color) {
+			r = SetRGB(color);
+			g = SetRGB(color);
+			b = SetRGB(color);
 		}
 		const bool CompareRect(const RECT& f, const RECT& s) {
 			if (f.bottom == s.bottom && f.left == s.left && f.right == s.right && f.top == s.top)return true;
 			else return false;
 		}
 		template<typename T>
-		const auto Convert_RGBA(COLORREF color, const T f) {
+		const auto ConvertRGBA(COLORREF color, const T f) {
 			int r, g, b;
-			Convert_RGB(r,g,b,color);
+			ConvertRGB(r,g,b,color);
 			const T result[4]{ static_cast<T>(r / 255),static_cast<T>(g / 255),static_cast<T>(b / 255),f };
 			return result;
 		}
@@ -152,15 +152,15 @@ namespace Ark {
 			}
 		}
 	public:
-		void Begin_Draw(HWND hwnd){
+		void BeginDraw(HWND hwnd){
 			CreateResource(hwnd);
 		}
-		void End_Draw(){
+		void EndDraw(){
 			DXGI_PRESENT_PARAMETERS parameters {};
 			DXGISwapChain->Present1(1, 0, &parameters);
 		}
-		void Draw_Clear(const COLORREF color,const float alpha){
-			auto clr = Convert_RGBA(color,alpha);
+		void DrawClear(const COLORREF color,const float alpha){
+			auto clr = ConvertRGBA(color,alpha);
 			D3D11DevContext->ClearRenderTargetView(D3D11RenderTargetView.Get(),clr);
 			D3D11DevContext->ClearDepthStencilView(D3D11DepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.f, 0);
 			D3D11DevContext->IASetInputLayout(D3D11InputLayout.Get());

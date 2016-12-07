@@ -11,7 +11,7 @@
 #pragma comment(lib,"d2d1.lib")
 #pragma comment(lib,"dwrite.lib")
 namespace Ark {
-	class D2D1_0 :Draw_Class {
+	class D2D1_0 :DrawClass {
 		CComQIPtr<IWICImagingFactory> IWICIFactory;
 		CComQIPtr<ID2D1Factory> D2DFactory;
 		CComQIPtr<ID2D1HwndRenderTarget> D2DTarget;
@@ -23,7 +23,7 @@ namespace Ark {
 			if (f.bottom == s.bottom && f.left == s.left && f.right == s.right && f.top == s.top) return true;
 			else return false;
 		}
-		bool Create_D2D_Resource(HWND hwnd) {
+		bool CreateD2DResource(HWND hwnd) {
 			if (!D2DTarget) {
 				GetClientRect(hwnd, &size);
 				HRESULT hr = D2DFactory->CreateHwndRenderTarget(
@@ -45,15 +45,15 @@ namespace Ark {
 			}
 			return true;
 		}
-		int Set_RGB(COLORREF& color) {
+		int SetRGB(COLORREF& color) {
 			int i = color % 0x100;
 			color /= 0x100;
 			return i;
 		}
-		void Convert_RGB(int& r, int& g, int& b, COLORREF& color) {
-			r = Set_RGB(color);
-			g = Set_RGB(color);
-			b = Set_RGB(color);
+		void ConvertRGB(int& r, int& g, int& b, COLORREF& color) {
+			r = SetRGB(color);
+			g = SetRGB(color);
+			b = SetRGB(color);
 		}
 	public:
 		D2D1_0() {
@@ -66,71 +66,71 @@ namespace Ark {
 			IWICIFactory.Release();
 			CoUninitialize();
 		}
-		void Begin_Draw(HWND hwnd) {
-			if (Create_D2D_Resource(hwnd))D2DTarget->BeginDraw();
+		void BeginDraw(HWND hwnd) {
+			if (CreateD2DResource(hwnd))D2DTarget->BeginDraw();
 		}
-		void End_Draw() {
+		void EndDraw() {
 			if (D2DTarget->EndDraw() == D2DERR_RECREATE_TARGET) {
 				D2DTarget.Release();
 				D2DSCBrush.Release();
 			}
 		}
-		void Draw_Clear(COLORREF color) {
+		void DrawClear(COLORREF color) {
 			int r, g, b;
-			Convert_RGB(r, g, b, color);
+			ConvertRGB(r, g, b, color);
 			D2DTarget->Clear(D2D1::ColorF(RGB(b, g, r)));
 		}
-		void Draw_String(const float x, const float y, LPCTSTR lp, COLORREF color, const float f, const float size) {
+		void DrawString(const float x, const float y, LPCTSTR lp, COLORREF color, const float f, const float size) {
 			int r, g, b;
-			Convert_RGB(r, g, b, color);
+			ConvertRGB(r, g, b, color);
 			D2DWFactory->CreateTextFormat(_T("ƒƒCƒŠƒI"), NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
 				DWRITE_FONT_STRETCH_NORMAL, size, L"ja-jp", &D2DWFormat);
 			D2DSCBrush->SetColor(D2D1::ColorF(RGB(b, g, r), f));
 			D2DTarget->DrawText(lp, lstrlen(lp), D2DWFormat, D2D1::RectF(x, y, x + lstrlen(lp)*size, y + size), D2DSCBrush);
 			D2DWFormat.Release();
 		}
-		void Draw_Line(const float x1, const float y1, const float x2, const float y2, COLORREF color, const float f, const float size) {
+		void DrawLine(const float x1, const float y1, const float x2, const float y2, COLORREF color, const float f, const float size) {
 			int r, g, b;
-			Convert_RGB(r, g, b, color);
+			ConvertRGB(r, g, b, color);
 			D2DSCBrush->SetColor(D2D1::ColorF(RGB(b, g, r), f));
 			D2DTarget->DrawLine(D2D1::Point2F(x1, y1), D2D1::Point2F(x2, y2), D2DSCBrush, size);
 		}
-		void Draw_Rectangle(const float x1, const float y1, const float x2, const float y2, COLORREF color, const float f) {
+		void DrawRectangle(const float x1, const float y1, const float x2, const float y2, COLORREF color, const float f) {
 			int r, g, b;
-			Convert_RGB(r, g, b, color);
+			ConvertRGB(r, g, b, color);
 			D2DSCBrush->SetColor(D2D1::ColorF(RGB(b, g, r), f));
 			D2DTarget->FillRectangle(D2D1::RectF(x1, y1, x2, y2), D2DSCBrush);
 		}
-		void Draw_Rectangle(const float x1, const float y1, const float x2, const float y2, COLORREF color, const float f, const float size) {
+		void DrawRectangle(const float x1, const float y1, const float x2, const float y2, COLORREF color, const float f, const float size) {
 			int r, g, b;
-			Convert_RGB(r, g, b, color);
+			ConvertRGB(r, g, b, color);
 			D2DSCBrush->SetColor(D2D1::ColorF(RGB(b, g, r), f));
 			D2DTarget->DrawRectangle(D2D1::RectF(x1, y1, x2, y2), D2DSCBrush, size);
-		}void Draw_Round_Rectangle(const float x1, const float y1, const float x2, const float y2, const float rx, const float ry, COLORREF color, const float f) {
+		}void DrawRoundRectangle(const float x1, const float y1, const float x2, const float y2, const float rx, const float ry, COLORREF color, const float f) {
 			int r, g, b;
-			Convert_RGB(r, g, b, color);
+			ConvertRGB(r, g, b, color);
 			D2DSCBrush->SetColor(D2D1::ColorF(RGB(b, g, r), f));
 			D2DTarget->FillRoundedRectangle(D2D1::RoundedRect(D2D1::RectF(x1, y1, x2, y2), rx, ry), D2DSCBrush);
 		}
-		void Draw_Round_Rectangle(const float x1, const float y1, const float x2, const float y2, const float rx, const float ry, COLORREF color, const float f, const float size) {
+		void DrawRoundRectangle(const float x1, const float y1, const float x2, const float y2, const float rx, const float ry, COLORREF color, const float f, const float size) {
 			int r, g, b;
-			Convert_RGB(r, g, b, color);
+			ConvertRGB(r, g, b, color);
 			D2DSCBrush->SetColor(D2D1::ColorF(RGB(b, g, r), f));
 			D2DTarget->DrawRoundedRectangle(D2D1::RoundedRect(D2D1::RectF(x1, y1, x2, y2), rx, ry), D2DSCBrush, size);
 		}
-		void Draw_Ellipse(const float x, const float y, const float rx, const float ry, COLORREF color, const float f) {
+		void DrawEllipse(const float x, const float y, const float rx, const float ry, COLORREF color, const float f) {
 			int r, g, b;
-			Convert_RGB(r, g, b, color);
+			ConvertRGB(r, g, b, color);
 			D2DSCBrush->SetColor(D2D1::ColorF(RGB(b, g, r), f));
 			D2DTarget->FillEllipse(D2D1::Ellipse(D2D1::Point2F(x, y), rx, ry), D2DSCBrush);
 		}
-		void Draw_Ellipse(const float x, const float y, const float rx, const float ry, COLORREF color, const float f, const float size) {
+		void DrawEllipse(const float x, const float y, const float rx, const float ry, COLORREF color, const float f, const float size) {
 			int r, g, b;
-			Convert_RGB(r, g, b, color);
+			ConvertRGB(r, g, b, color);
 			D2DSCBrush->SetColor(D2D1::ColorF(RGB(b, g, r), f));
 			D2DTarget->DrawEllipse(D2D1::Ellipse(D2D1::Point2F(x, y), rx, ry), D2DSCBrush, size);
 		}
-		CComQIPtr<ID2D1Bitmap> Set_Bitmap(LPCTSTR image) {
+		CComQIPtr<ID2D1Bitmap> SetBitmap(LPCTSTR image) {
 			CComQIPtr<ID2D1Bitmap> bitmap;
 			if (IWICIFactory && !bitmap) {
 				CComQIPtr<IWICBitmapDecoder> dec;

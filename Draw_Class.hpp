@@ -1,4 +1,4 @@
 #pragma once
-struct Draw_Class {
+struct DrawClass {
 	using type = std::nullptr_t;
 };

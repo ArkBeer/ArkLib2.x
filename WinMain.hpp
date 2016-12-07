@@ -1,7 +1,7 @@
 #pragma once
 namespace Ark {
 	class WinClass {
-		static const auto Create_WndClassEx() {
+		static const auto CreateWndClassEx() {
 			WNDCLASSEX wex;
 			ZeroMemory(&wex, sizeof(wex));
 			wex.cbSize = sizeof(WNDCLASSEX);
@@ -13,21 +13,35 @@ namespace Ark {
 			wex.lpszClassName = _T("ArkLib");
 			return wex;
 		}
-
-		struct WinMain_Arguments {
+		struct WinMainArguments {
 			HINSTANCE hInstance;
 			HINSTANCE hPrevInstance;
 			LPCTSTR lpCmdLine;
 			int nCmdShow;
 		};
 		WNDCLASSEX WndClass_Ex;
-		WinMain_Arguments WinMain_Arg;
+		WinMainArguments WinMain_Arg;
 		static WinClass* ptr;
 		static HWND hWnd;
 		static bool endflag;
-
+		const auto trans(const int x, const int y, const float xratio, const float yratio) {
+			std::pair<int, int> pair;
+			if (x / yratio == y) {
+				pair.first = x;
+				pair.second = y;
+			}
+			else if (x / yratio*xratio < y) {
+				pair.first = x;
+				pair.second = x / yratio*xratio;
+			}
+			else {
+				pair.first = y / xratio * yratio;
+				pair.second = y;
+			}
+			return pair;
+		}
 	public:
-		WinClass(HINSTANCE hinst) :WinClass(hinst, Create_WndClassEx()) {}
+		WinClass(HINSTANCE hinst) :WinClass(hinst, CreateWndClassEx()) {}
 		WinClass(HINSTANCE hinst, WNDCLASSEX wex) {
 			ptr = this;
 			endflag = false;
@@ -69,6 +83,7 @@ namespace Ark {
 				return DefWindowProc(hwnd, msg, wParam, lParam);
 			}
 		}
+		static const auto GethWnd() { return hWnd; }
 #define SETFUNC(name,index) auto Set##name(const LONG lp){SetWindowLongPtr(hWnd, index, lp);return *this;}
 #define ADDFUNC(name,index) auto Add##name(const LONG lp){const LONG _lp=GetWindowLongPtr(hWnd,index);SetWindowLongPtr(hWnd, index, _lp | lp);return *this;}
 		SETFUNC(Style, GWL_STYLE)
@@ -102,16 +117,16 @@ namespace Ark {
 			return *ptr;
 		}
 
-			static const bool Set_Window_Elements(int index, LONG lp) {
+			static const bool SetWindowElements(int index, LONG lp) {
 			if (SetWindowLongPtr(hWnd, index, lp))return true;
 			return false;
 		}
 
-		static const bool Set_WndClassEx_Elements(int index, LONG lp) {
+		static const bool SetWndClassExElements(int index, LONG lp) {
 			if (SetClassLongPtr(hWnd, index, lp))return true;
 			return false;
 		}
-		static const bool Set_Window_Pos(HWND z, int x, int y, int cx, int cy, UINT uf = SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW) {
+		static const bool SetWindowPosition(HWND z, int x, int y, int cx, int cy, UINT uf = SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW) {
 			if (SetWindowPos(hWnd, z, x, y, cx, cy, uf))return true;
 			return false;
 		}
@@ -138,7 +153,17 @@ namespace Ark {
 			return 0;
 
 		}*/
-		static const bool End_Flag() {
+		
+		static auto& LockAspectRatio(const float xratio, const float yratio) {
+			RECT rc;
+			GetClientRect(Ark::WinClass::GethWnd(), &rc);
+			auto pair = ptr->trans(rc.right, rc.bottom, xratio, yratio);
+			if (!(pair.first == rc.right && pair.second == rc.bottom)) {
+				Ark::WinClass::SetSize(pair.first, pair.second);
+			}
+			return *ptr;
+		}
+		static const bool EndFlag() {
 			MSG msg;
 			if (PeekMessage(&msg, hWnd, 0, 0, PM_REMOVE)) {
 				if (msg.message != WM_QUIT) {
@@ -150,7 +175,6 @@ namespace Ark {
 			return endflag;
 		}
 		static const bool Exit() { endflag = true; return endflag; }
-		static const auto Get_hWnd() {return hWnd;}
 	};
 	WinClass* WinClass::ptr = nullptr;
 	HWND WinClass::hWnd = nullptr;

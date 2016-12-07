@@ -9,12 +9,12 @@ namespace Ark {
 			y = m.y;
 			return *this;
 		}
-		static const Mouse Get_Screen_Position() {
+		static const Mouse GetScreenPosition() {
 			POINT pt;
 			GetCursorPos(&pt);
 			return Mouse(pt.x, pt.y);
 		}
-		static const Mouse Get_Client_Position(HWND hWnd) {
+		static const Mouse GetClientPosition(HWND hWnd) {
 			POINT pt;
 			GetCursorPos(&pt);
 			ScreenToClient(hWnd, &pt);
