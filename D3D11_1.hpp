@@ -3,6 +3,7 @@
 #include<atlbase.h>
 #include<d3d11_1.h>
 #include<d3dcompiler.h>
+#include<directxmath.h>
 #include<fstream>
 #pragma comment(lib,"d3d11.lib")
 #pragma comment(lib,"d3dcompiler.lib")
@@ -17,6 +18,8 @@ namespace Ark {
 		Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelshader;
 		Microsoft::WRL::ComPtr<ID3D11InputLayout> inputlayout;
 		Microsoft::WRL::ComPtr<ID3D11Buffer> vertexbuffer;
+		Microsoft::WRL::ComPtr<ID3D11Buffer> indexbuffer;
+		Microsoft::WRL::ComPtr<ID3D11Buffer> constantbuffer;
 		struct ComInitializer {
 			ComInitializer() { CoInitialize(nullptr); }
 			~ComInitializer() { CoUninitialize(); }
