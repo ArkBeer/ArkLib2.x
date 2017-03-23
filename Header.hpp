@@ -21,5 +21,4 @@
 #include"Draw_Class.hpp"
 #include"D2D1_0.hpp"
 #include"D2D1_1.hpp"
-#include"D3D11.hpp"
 #include"Xaudio2.hpp"
