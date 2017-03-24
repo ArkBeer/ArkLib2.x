@@ -9,6 +9,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	while (!wc.EndFlag()) {
 		auto s = std::chrono::steady_clock::now();
 		wc.LockAspectRatio(10, 16);
+		d.DrawClear();
 		d.Render();
 		fps.Count();
 		Ark::TstringStream tstr;

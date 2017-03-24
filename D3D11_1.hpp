@@ -28,6 +28,13 @@ namespace Ark {
 		struct Vec3 {
 			float x, y, z;
 		};
+		struct Color{
+			float r,g,b,a;
+		};
+		struct Vertex {
+			Vec3 vec;
+			Color color;
+		};
 		D3D_DRIVER_TYPE drivertype;
 		D3D_FEATURE_LEVEL featurelevel;
 		auto CompileShaderFromFile(LPCTSTR szFileName, LPCSTR szEntryPoint, LPCSTR szShaderModel)
@@ -105,8 +112,9 @@ namespace Ark {
 				Microsoft::WRL::ComPtr<ID3DBlob> psblob;
 				vsblob = CompileShaderFromFile(_T("VertexShader.hlsl"), "main", featurelevel >= D3D_FEATURE_LEVEL_11_0 ? "vs_5_0" : "vs_4_0");
 				d3d11device->CreateVertexShader(vsblob->GetBufferPointer(), vsblob->GetBufferSize(), nullptr, &vertexshader);
-				const std::array<D3D11_INPUT_ELEMENT_DESC, 1> layout{
-					D3D11_INPUT_ELEMENT_DESC{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+				const std::array<D3D11_INPUT_ELEMENT_DESC, 2> layout{
+					D3D11_INPUT_ELEMENT_DESC{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+					D3D11_INPUT_ELEMENT_DESC{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 				};
 				d3d11device->CreateInputLayout(layout.data(),layout.size(), vsblob->GetBufferPointer(), vsblob->GetBufferSize(), &inputlayout);
 				d3d11context->IASetInputLayout(inputlayout.Get());
@@ -114,27 +122,34 @@ namespace Ark {
 				psblob = CompileShaderFromFile(_T("PixelShader.hlsl"), "main", featurelevel >= D3D_FEATURE_LEVEL_11_0 ? "ps_5_0" : "ps_4_0");
 				d3d11device->CreatePixelShader(psblob->GetBufferPointer(), psblob->GetBufferSize(), nullptr, &pixelshader);
 
-				std::array< Vec3, 3> vertices =
-				{
-					Vec3{ 0.0f, 0.5f, 0.5f },
-					Vec3{ 0.5f, -0.5f, 0.5f },
-					Vec3{ -0.5f, -0.5f, 0.5f },
+				std::array< Vertex, 3> vertices{
+					Vertex{Vec3{ 0.0f, 0.5f, 0.5f },{1.0f,0.0f,0.0f,1.0f}},
+					Vertex{Vec3{ 0.5f, -0.5f, 0.5f } ,{0.0f,1.0f,0.0f,1.0f}},
+					Vertex{Vec3{ -0.5f, -0.5f, 0.5f },{0.0f,0.0f,1.0f,1.0f}},
 				};
-
 				D3D11_BUFFER_DESC desc{};
-				desc.ByteWidth = sizeof(Vec3)*vertices.size();
+				desc.ByteWidth = sizeof(Vertex)*vertices.size();
 				desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
 				D3D11_SUBRESOURCE_DATA initdata{};
 				initdata.pSysMem = vertices.data();
-				auto hr=d3d11device->CreateBuffer(&desc, &initdata, &vertexbuffer);
-				UINT s = sizeof(Vec3);
+				d3d11device->CreateBuffer(&desc, &initdata, &vertexbuffer);
+				
+				std::array<UINT, 3> indexes{ 0,1,2 };
+				D3D11_BUFFER_DESC idesc{};
+				idesc.ByteWidth = indexes.size();
+				idesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+				D3D11_SUBRESOURCE_DATA idata{};
+				idata.pSysMem = indexes.data();
+				auto hr=d3d11device->CreateBuffer(&idesc,&idata,&indexbuffer);
+				hr;
+				UINT s = sizeof(Vertex);
 				UINT o = 0;
 				d3d11context->IASetVertexBuffers(0, 1, vertexbuffer.GetAddressOf(), &s, &o);
 				d3d11context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-				const std::array<float, 4> color = { 0.0f,0.2f,0.4f,1.0f };
-				d3d11context->ClearRenderTargetView(rendertarget.Get(), color.data());
+				d3d11context->IASetIndexBuffer(indexbuffer.Get(),DXGI_FORMAT_R16_UINT,0);
+
 				d3d11context->PSSetShader(pixelshader.Get(), nullptr, 0);
 				d3d11context->VSSetShader(vertexshader.Get(), nullptr, 0);
 
@@ -145,6 +160,10 @@ namespace Ark {
 			d3d11context->Draw(3, 0);
 			swapchain->Present(1, 0);
 
+		}
+		void DrawClear() {
+			const std::array<float, 4> color = { 0.0f,0.2f,0.4f,1.0f };
+			d3d11context->ClearRenderTargetView(rendertarget.Get(), color.data());
 		}
 	};
 }
