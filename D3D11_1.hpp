@@ -20,6 +20,7 @@ namespace Ark {
 		Microsoft::WRL::ComPtr<ID3D11Buffer> vertexbuffer;
 		Microsoft::WRL::ComPtr<ID3D11Buffer> indexbuffer;
 		Microsoft::WRL::ComPtr<ID3D11Buffer> constantbuffer;
+		Microsoft::WRL::ComPtr<ID3D11ShaderReflection> reflect;
 		struct ComInitializer {
 			ComInitializer() { CoInitialize(nullptr); }
 			~ComInitializer() { CoUninitialize(); }
@@ -48,6 +49,42 @@ namespace Ark {
 			D3DCompileFromFile(szFileName, nullptr, nullptr, szEntryPoint, szShaderModel, dwShaderFlags, 0, &blob, nullptr);
 			return blob;
 		}
+		DXGI_FORMAT GetDxgiFormat(D3D10_REGISTER_COMPONENT_TYPE type, BYTE mask){
+			if (mask & 0x0F){
+            // xyzw
+				switch (type){
+				case D3D10_REGISTER_COMPONENT_FLOAT32:
+					return DXGI_FORMAT_R32G32B32A32_FLOAT;
+				}
+			}
+
+			if (mask & 0x07){
+            // xyz
+				switch (type){
+				case D3D10_REGISTER_COMPONENT_FLOAT32:
+					return DXGI_FORMAT_R32G32B32_FLOAT;
+				}
+			}
+
+			if (mask & 0x3){
+				// xy
+				switch (type){
+				case D3D10_REGISTER_COMPONENT_FLOAT32:
+					return DXGI_FORMAT_R32G32_FLOAT;
+				}
+			}
+
+			if (mask & 0x1){
+				// x
+				switch (type){
+				case D3D10_REGISTER_COMPONENT_FLOAT32:
+					return DXGI_FORMAT_R32_FLOAT;
+				}
+			}
+	
+			return DXGI_FORMAT_UNKNOWN;
+		}
+	
 	public:
 		void InitDevice(HWND hwnd) {
 			if (!d3d11context || !d3d11device) {
@@ -122,6 +159,29 @@ namespace Ark {
 				psblob = CompileShaderFromFile(_T("PixelShader.hlsl"), "main", featurelevel >= D3D_FEATURE_LEVEL_11_0 ? "ps_5_0" : "ps_4_0");
 				d3d11device->CreatePixelShader(psblob->GetBufferPointer(), psblob->GetBufferSize(), nullptr, &pixelshader);
 
+				D3DReflect(vsblob->GetBufferPointer(),vsBlob->GetBufferSize(),IID_ID3D11ShaderReflection,&reflect);
+				D3D11_SHADER_DESC shaderdesc{};
+				reflect->GetDesc(&shaderdesc);
+				std::vector<D3D11_INPUT_ELEMENT_DESC> eldesces;
+				for(int i=0;i<shaderdesc.InputParamaters;++i){
+					D3D11_SIGNATURE_PARAMETER_DESC sigdesc{};
+					reflect->GetInputParameterDesc(i,&sigdesc);
+					auto format = GetDxgiFormat(sigdesc.ComponentType,sigdesc.Mask);
+					D3D11_INPUT_ELEMENT_DESC eldesc{
+						sigdesc.SemanticName,
+						sigdesc.SemanticIndex,
+						format,
+						0,
+						D3D11_APPEND_ALIGNED_ELEMENT,
+						D3D11_INPUT_PER_VERTEX_DATA,
+						0
+					};
+					eldesces.push_back(eldesc);
+				}
+				if(!eldesces.empty()){
+					d3d11device->CreateInputLayout(eldesces.data(),eldesces.size(), vsblob->GetBufferPointer(), vsblob->GetBufferSize(), &inputlayout);
+				}
+				
 				std::array< Vertex, 3> vertices{
 					Vertex{Vec3{ 0.0f, 0.5f, 0.5f },{1.0f,0.0f,0.0f,1.0f}},
 					Vertex{Vec3{ 0.5f, -0.5f, 0.5f } ,{0.0f,1.0f,0.0f,1.0f}},
