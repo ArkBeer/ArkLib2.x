@@ -49,6 +49,7 @@ namespace Ark {
 			D3DCompileFromFile(szFileName, nullptr, nullptr, szEntryPoint, szShaderModel, dwShaderFlags, 0, &blob, nullptr);
 			return blob;
 		}
+		//[wip](TYPEがこれでいいのかわからん)
 		DXGI_FORMAT GetDxgiFormat(D3D10_REGISTER_COMPONENT_TYPE type, BYTE mask){
 			if (mask & 0x0F){
             // xyzw
