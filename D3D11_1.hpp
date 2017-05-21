@@ -122,10 +122,19 @@ namespace Ark {
 				psblob = CompileShaderFromFile(_T("PixelShader.hlsl"), "main", featurelevel >= D3D_FEATURE_LEVEL_11_0 ? "ps_5_0" : "ps_4_0");
 				d3d11device->CreatePixelShader(psblob->GetBufferPointer(), psblob->GetBufferSize(), nullptr, &pixelshader);
 
+				d3d11context->PSSetShader(pixelshader.Get(), nullptr, 0);
+				d3d11context->VSSetShader(vertexshader.Get(), nullptr, 0);
+
+
+
+			}
+		}
+		void setdraw() {
+			if (d3d11context && d3d11device) {
 				std::array< Vertex, 3> vertices{
-					Vertex{Vec3{ 0.0f, 0.5f, 0.5f },{1.0f,0.0f,0.0f,1.0f}},
-					Vertex{Vec3{ 0.5f, -0.5f, 0.5f } ,{0.0f,1.0f,0.0f,1.0f}},
-					Vertex{Vec3{ -0.5f, -0.5f, 0.5f },{0.0f,0.0f,1.0f,1.0f}},
+					Vertex{ Vec3{ 0.0f, 0.5f, 0.5f },{ 1.0f,0.0f,0.0f,1.0f } },
+					Vertex{ Vec3{ 0.5f, -0.5f, 0.5f } ,{ 0.0f,1.0f,0.0f,1.0f } },
+					Vertex{ Vec3{ -0.5f, -0.5f, 0.5f },{ 0.0f,0.0f,1.0f,1.0f } },
 				};
 				D3D11_BUFFER_DESC desc{};
 				desc.ByteWidth = sizeof(Vertex)*vertices.size();
@@ -141,17 +150,16 @@ namespace Ark {
 				idesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 				D3D11_SUBRESOURCE_DATA idata{};
 				idata.pSysMem = indexes.data();
-				auto hr=d3d11device->CreateBuffer(&idesc,&idata,&indexbuffer);
+				auto hr = d3d11device->CreateBuffer(&idesc, &idata, &indexbuffer);
 				hr;
 				UINT s = sizeof(Vertex);
 				UINT o = 0;
 				d3d11context->IASetVertexBuffers(0, 1, vertexbuffer.GetAddressOf(), &s, &o);
 				d3d11context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-				d3d11context->IASetIndexBuffer(indexbuffer.Get(),DXGI_FORMAT_R16_UINT,0);
-
-				d3d11context->PSSetShader(pixelshader.Get(), nullptr, 0);
-				d3d11context->VSSetShader(vertexshader.Get(), nullptr, 0);
+				d3d11context->IASetIndexBuffer(indexbuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
+				
+				D3D11_BUFFER_DESC cbdesc{};
 
 			}
 		}
