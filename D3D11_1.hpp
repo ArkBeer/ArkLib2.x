@@ -201,6 +201,10 @@ namespace Ark {
 
 				d3d11context->IASetIndexBuffer(indexbuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
 				
+				D3D11_BUFFER_DESC cbdesc{};
+				cbdesc.ByteWidth=sizeof(DirectX::XMMATRIX);
+				cbdesc.BindFlags=D3D11_BIND_CONSTANT_BUFFER;
+
 
 			}
 		}
