@@ -48,6 +48,22 @@ namespace Ark {
 			D3DCompileFromFile(szFileName, nullptr, nullptr, szEntryPoint, szShaderModel, dwShaderFlags, 0, &blob, nullptr);
 			return blob;
 		}
+		const auto GetDxgiFormat(const D3D_REGISTER_COMPONENT_TYPE type,const BYTE byte){
+			if(type==D3D_REGISTER_COMPONENT_FLOAT32){
+				switch(byte){
+				case 0x0f:
+					return DXGI_FORMAT_R32G32B32A32_FLOAT;
+				case 0x07:
+					return DXGI_FORMAT_R32G32B32_FLOAT;
+				case 0x03:
+					return DXGI_FORMAT_R32G32_FLOAT;
+				case 0x01:
+					return DXGI_FORMAT_R32_FLOAT;
+				default:
+					return DXGI_FORMAT_UNKNOWN;
+				}
+			}
+		}
 	public:
 		void InitDevice(HWND hwnd) {
 			if (!d3d11context || !d3d11device) {
@@ -112,6 +128,13 @@ namespace Ark {
 				Microsoft::WRL::ComPtr<ID3DBlob> psblob;
 				vsblob = CompileShaderFromFile(_T("VertexShader.hlsl"), "main", featurelevel >= D3D_FEATURE_LEVEL_11_0 ? "vs_5_0" : "vs_4_0");
 				d3d11device->CreateVertexShader(vsblob->GetBufferPointer(), vsblob->GetBufferSize(), nullptr, &vertexshader);
+
+				psblob = CompileShaderFromFile(_T("PixelShader.hlsl"), "main", featurelevel >= D3D_FEATURE_LEVEL_11_0 ? "ps_5_0" : "ps_4_0");
+				d3d11device->CreatePixelShader(psblob->GetBufferPointer(), psblob->GetBufferSize(), nullptr, &pixelshader);
+
+				d3d11context->PSSetShader(pixelshader.Get(), nullptr, 0);
+				d3d11context->VSSetShader(vertexshader.Get(), nullptr, 0);
+
 				const std::array<D3D11_INPUT_ELEMENT_DESC, 2> layout{
 					D3D11_INPUT_ELEMENT_DESC{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 					D3D11_INPUT_ELEMENT_DESC{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 }
@@ -119,11 +142,30 @@ namespace Ark {
 				d3d11device->CreateInputLayout(layout.data(),layout.size(), vsblob->GetBufferPointer(), vsblob->GetBufferSize(), &inputlayout);
 				d3d11context->IASetInputLayout(inputlayout.Get());
 
-				psblob = CompileShaderFromFile(_T("PixelShader.hlsl"), "main", featurelevel >= D3D_FEATURE_LEVEL_11_0 ? "ps_5_0" : "ps_4_0");
-				d3d11device->CreatePixelShader(psblob->GetBufferPointer(), psblob->GetBufferSize(), nullptr, &pixelshader);
+				Microsoft::WRL::ComPtr<ID3D11ShaderReflection> reflect;
+				D3DReflect(vsblob->GetBufferPointer(),vsblob->GetBufferSize(),IID_ID3D11ShaderReflection,&reflect);
 
-				d3d11context->PSSetShader(pixelshader.Get(), nullptr, 0);
-				d3d11context->VSSetShader(vertexshader.Get(), nullptr, 0);
+				D3D11_SHADER_DESC sdesc{};
+				reflect->GetDesc(&sdesc);
+				std::vector<D3D11_INPUT_ELEMENT_DESC> element;
+				for(int i=0;i<sdesc.InputParameters;++i){
+					D3D11_SIGNATURE_PARAMETER_DESC sigdesc{};
+					reflect->GetInputParameterDesc(i,&sigdesc);
+					const auto format=GetDxgiFormat(sigdesc.ComponentType,sigdesc.Mask);
+					D3D11_INPUT_ELEMENT_DESC eldesc={
+						sigdesc.SemanticName,
+						sigdesc.SemanticIndex,
+						format,
+						0,
+						D3D11_APPEND_ALIGNED_ELEMENT,
+						D3D11_INPUT_PER_VERTEX_DATA,
+						0
+					};
+					element.push_back(eldesc);
+				}
+				/*if(!element.empty()){
+					d3d11device->CreateInputLayout(element.data(),element.size(), vsblob->GetBufferPointer(), vsblob->GetBufferSize(), &inputlayout);
+				}*/
 
 
 
@@ -159,7 +201,6 @@ namespace Ark {
 
 				d3d11context->IASetIndexBuffer(indexbuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
 				
-				D3D11_BUFFER_DESC cbdesc{};
 
 			}
 		}
