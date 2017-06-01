@@ -84,6 +84,11 @@ namespace Ark {
 			}
 		}
 		static const auto GethWnd() { return hWnd; }
+		const RECT GetSize() {
+			RECT rect;
+			GetClientRect(hWnd, &rect);
+			return rect;
+		}
 #define SETFUNC(name,index) auto Set##name(const LONG lp){SetWindowLongPtr(hWnd, index, lp);return *this;}
 #define ADDFUNC(name,index) auto Add##name(const LONG lp){const LONG _lp=GetWindowLongPtr(hWnd,index);SetWindowLongPtr(hWnd, index, _lp | lp);return *this;}
 		SETFUNC(Style, GWL_STYLE)
