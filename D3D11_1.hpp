@@ -8,6 +8,9 @@
 #pragma comment(lib,"d3dcompiler.lib")
 #include<vector>
 #include<array>
+
+#include"WIC.hpp"
+
 namespace Ark {
 	class D3D11_1 {
 		struct ComInitializer {
@@ -23,6 +26,18 @@ namespace Ark {
 		struct Vertex {
 			Vec4 vec;
 			Color color;
+		};
+		struct Texture {
+			Microsoft::WRL::ComPtr<ID3D11Texture2D> texture;
+			Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> resourceview;
+			Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler;
+			Texture(const Ark::WIC::Image& im) {
+				D3D11_TEXTURE2D_DESC desc{};
+				desc.Width = im.getwidth();
+				desc.Height = im.getheight();
+				desc.MipLevels = 1;
+				desc.ArraySize = 1;
+			}
 		};
 		ComInitializer com;
 		Microsoft::WRL::ComPtr<ID3D11Device1> d3d11device;

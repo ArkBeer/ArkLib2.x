@@ -12,6 +12,9 @@ namespace Ark {
 			ComInitializer() { CoInitialize(nullptr); }
 			~ComInitializer() { CoUninitialize(); }
 		};
+		ComInitializer com;
+		Microsoft::WRL::ComPtr<IWICImagingFactory2> IWICIFactory;
+	public:
 		class Image {
 			std::vector<unsigned char> buffer;
 			int width, height;
@@ -34,9 +37,6 @@ namespace Ark {
 				return buffer.size();
 			}
 		};
-		ComInitializer com;
-		Microsoft::WRL::ComPtr<IWICImagingFactory2> IWICIFactory;
-	public:
 		WIC() {
 			CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_IWICImagingFactory, &IWICIFactory);
 		}
