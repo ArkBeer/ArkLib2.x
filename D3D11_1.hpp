@@ -31,12 +31,37 @@ namespace Ark {
 			Microsoft::WRL::ComPtr<ID3D11Texture2D> texture;
 			Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> resourceview;
 			Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler;
-			Texture(const Ark::WIC::Image& im) {
+			Texture(const Ark::WIC::Image& im, const Microsoft::WRL::ComPtr<ID3D11Device1>& device) {
 				D3D11_TEXTURE2D_DESC desc{};
 				desc.Width = im.getwidth();
 				desc.Height = im.getheight();
 				desc.MipLevels = 1;
 				desc.ArraySize = 1;
+				desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				desc.SampleDesc.Count = 1;
+				desc.SampleDesc.Quality = 0;
+				desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+				D3D11_SUBRESOURCE_DATA initdata{};
+				initdata.pSysMem = im.getdata();
+				initdata.SysMemPitch = im.stride();
+				initdata.SysMemSlicePitch = im.size();
+				device->CreateTexture2D(&desc, &initdata, &texture);
+				D3D11_SHADER_RESOURCE_VIEW_DESC rdesc{};
+				rdesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				rdesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+				rdesc.Texture2D.MipLevels = 1;
+				device->CreateShaderResourceView(texture.Get(),&rdesc,&resourceview);
+
+				D3D11_SAMPLER_DESC sdesc{};
+				sdesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+				sdesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+				sdesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+				sdesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+				sdesc.MaxAnisotropy = 1;
+				sdesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+				sdesc.MaxLOD = D3D11_FLOAT32_MAX;
+				device->CreateSamplerState(&sdesc,&sampler);
 			}
 		};
 		ComInitializer com;

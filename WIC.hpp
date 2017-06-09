@@ -24,6 +24,9 @@ namespace Ark {
 			unsigned char* getdata() {
 				return buffer.data();
 			}
+			const unsigned char* getdata()const {
+				return buffer.data();
+			}
 			const int getwidth()const {
 				return width;
 			}
