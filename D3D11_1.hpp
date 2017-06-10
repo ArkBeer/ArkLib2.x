@@ -23,46 +23,13 @@ namespace Ark {
 		struct Color {
 			float r, g, b, a;
 		};
+		struct Tex {
+			float x, y;
+		};
 		struct Vertex {
 			Vec4 vec;
 			Color color;
-		};
-		struct Texture {
-			Microsoft::WRL::ComPtr<ID3D11Texture2D> texture;
-			Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> resourceview;
-			Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler;
-			Texture(const Ark::WIC::Image& im, const Microsoft::WRL::ComPtr<ID3D11Device1>& device) {
-				D3D11_TEXTURE2D_DESC desc{};
-				desc.Width = im.getwidth();
-				desc.Height = im.getheight();
-				desc.MipLevels = 1;
-				desc.ArraySize = 1;
-				desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-				desc.SampleDesc.Count = 1;
-				desc.SampleDesc.Quality = 0;
-				desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-
-				D3D11_SUBRESOURCE_DATA initdata{};
-				initdata.pSysMem = im.getdata();
-				initdata.SysMemPitch = im.stride();
-				initdata.SysMemSlicePitch = im.size();
-				device->CreateTexture2D(&desc, &initdata, &texture);
-				D3D11_SHADER_RESOURCE_VIEW_DESC rdesc{};
-				rdesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-				rdesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-				rdesc.Texture2D.MipLevels = 1;
-				device->CreateShaderResourceView(texture.Get(),&rdesc,&resourceview);
-
-				D3D11_SAMPLER_DESC sdesc{};
-				sdesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-				sdesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-				sdesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-				sdesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-				sdesc.MaxAnisotropy = 1;
-				sdesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-				sdesc.MaxLOD = D3D11_FLOAT32_MAX;
-				device->CreateSamplerState(&sdesc,&sampler);
-			}
+			Tex tex;
 		};
 		ComInitializer com;
 		Microsoft::WRL::ComPtr<ID3D11Device1> d3d11device;
@@ -109,6 +76,11 @@ namespace Ark {
 		}
 
 	public:
+		struct Texture {
+			Microsoft::WRL::ComPtr<ID3D11Texture2D> texture;
+			Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> resourceview;
+			Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler;
+		};
 		const bool InitDevice(HWND hwnd) {
 			if (!d3d11context || !d3d11device) {
 				Microsoft::WRL::ComPtr<ID3D11Device> device;
@@ -215,22 +187,59 @@ namespace Ark {
 			}
 			else return true;
 		}
+		auto& createtexture(Texture& tex,Ark::WIC::Image& i) {
+			if (d3d11device && !tex.texture) {
+				D3D11_TEXTURE2D_DESC desc{};
+				desc.Width = i.getwidth();
+				desc.Height = i.getheight();
+				desc.MipLevels = 1;
+				desc.ArraySize = 1;
+				desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				desc.SampleDesc.Count = 1;
+				desc.SampleDesc.Quality = 0;
+				desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+				D3D11_SUBRESOURCE_DATA initdata{};
+				initdata.pSysMem = i.getdata();
+				initdata.SysMemPitch = i.stride();
+				initdata.SysMemSlicePitch = i.size();
+				auto hr=d3d11device->CreateTexture2D(&desc, &initdata, &tex.texture);
+				D3D11_SHADER_RESOURCE_VIEW_DESC rdesc{};
+				rdesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+				rdesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+				rdesc.Texture2D.MipLevels = 1;
+				hr=d3d11device->CreateShaderResourceView(tex.texture.Get(), &rdesc, &tex.resourceview);
+
+				D3D11_SAMPLER_DESC sdesc{};
+				sdesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+				sdesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+				sdesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+				sdesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+				sdesc.MaxAnisotropy = 1;
+				sdesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+				sdesc.MaxLOD = D3D11_FLOAT32_MAX;
+				hr=d3d11device->CreateSamplerState(&sdesc, &tex.sampler);
+				//d3d11context->PSSetSamplers(0, 1, tex.sampler.GetAddressOf());
+			}
+			return tex;
+		}
 		void BeginDraw(HWND hwnd) {
 			InitDevice(hwnd);
 		}
 		void EndDraw() {
-			d3d11context->DrawIndexed(3, 0, 0);
+			d3d11context->DrawIndexed(4, 0, 0);
 			swapchain->Present(1, 0);
 		}
 		void DrawClear() {
 			const std::array<float, 4> color = { 0.0f,0.2f,0.4f,1.0f };
 			d3d11context->ClearRenderTargetView(rendertarget.Get(), color.data());
 		}
-		void Draw() {
-			std::array< Vertex, 3> vertices{
-				Vertex{ Vec4{ 0.0f, 0.5f, 0.5f, 1.0f },{ 1.0f,0.0f,0.0f,1.0f } },
-				Vertex{ Vec4{ 0.5f, -0.5f, 0.5f, 1.0f },{ 0.0f,1.0f,0.0f,1.0f } },
-				Vertex{ Vec4{ -0.5f, -0.5f, 0.5f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } },
+		void Draw(Texture& tex) {
+			std::array< Vertex, 4> vertices{
+				Vertex{ Vec4{ -0.5f, -0.5f, 0.5f, 1.0f },{ 1.0f,0.0f,0.0f,1.0f },{0.0f,1.0f} },
+				Vertex{ Vec4{ -0.5f, 0.5f, 0.5f, 1.0f },{ 0.0f,1.0f,0.0f,1.0f },{ 0.0f,0.0f } },
+				Vertex{ Vec4{ 0.5f, -0.5f, 0.5f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,1.0f } },
+				Vertex{ Vec4{ 0.5f, 0.5f, 0.5f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,0.0f } }
 			};
 
 			D3D11_BUFFER_DESC vdesc{};
@@ -244,7 +253,7 @@ namespace Ark {
 			const UINT o = 0;
 			d3d11context->IASetVertexBuffers(0, 1, vertexbuffer.GetAddressOf(), &s, &o);
 
-			std::array<UINT, 3> indexes{ 0,1,2 };
+			std::array<UINT, 4> indexes{ 0,1,2,3 };
 			D3D11_BUFFER_DESC idesc{};
 			idesc.ByteWidth = sizeof(indexes);
 			idesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
@@ -252,7 +261,8 @@ namespace Ark {
 			idata.pSysMem = indexes.data();
 			d3d11device->CreateBuffer(&idesc, &idata, &indexbuffer);
 			d3d11context->IASetIndexBuffer(indexbuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
-			d3d11context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			d3d11context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+			
 			static float angleRadians = 0;
 			const auto DELTA = DirectX::XMConvertToRadians(0.2f);
 			angleRadians += DELTA;
@@ -260,7 +270,7 @@ namespace Ark {
 			DirectX::XMStoreFloat4x4(&buff, m);
 			d3d11context->UpdateSubresource(constantbuffer.Get(), 0, nullptr, &buff, 0, 0);
 			d3d11context->VSSetConstantBuffers(0, 1, constantbuffer.GetAddressOf());
-
+			d3d11context->PSSetShaderResources(0,1,tex.resourceview.GetAddressOf());
 		}
 	};
 }
