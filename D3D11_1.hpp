@@ -45,11 +45,12 @@ namespace Ark {
 		D3D_DRIVER_TYPE drivertype;
 		D3D_FEATURE_LEVEL featurelevel;
 		struct ConstantBuffer {
-			DirectX::XMFLOAT4X4 Model;
-			DirectX::XMFLOAT4X4 View;
-			DirectX::XMFLOAT4X4 Projection;
+			DirectX::XMMATRIX Model;
+			DirectX::XMMATRIX View;
+			DirectX::XMMATRIX Projection;
 		};
 		ConstantBuffer buff;
+		RECT rect;
 		const auto CompileShaderFromFile(LPCTSTR szFileName, LPCSTR szEntryPoint, LPCSTR szShaderModel)
 		{
 			DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
@@ -137,8 +138,9 @@ namespace Ark {
 				d3d11device->CreateRenderTargetView(backbuffer.Get(), nullptr, &rendertarget);
 				d3d11context->OMSetRenderTargets(1, rendertarget.GetAddressOf(), nullptr);
 
-				RECT rect;
-				GetClientRect(hwnd, &rect);
+				RECT r;
+				GetClientRect(hwnd, &r);
+				rect = r;
 				D3D11_VIEWPORT vp{};
 				vp.TopLeftX = 0;
 				vp.TopLeftY = 0;
@@ -240,10 +242,12 @@ namespace Ark {
 		}
 		void Draw(Texture& tex) {
 			std::array< Vertex, 4> vertices{
-				Vertex{ Vec4{ -0.5f, -0.5f, 0.5f, 1.0f },{ 1.0f,0.0f,0.0f,1.0f },{0.0f,1.0f} },
-				Vertex{ Vec4{ -0.5f, 0.5f, 0.5f, 1.0f },{ 0.0f,1.0f,0.0f,1.0f },{ 0.0f,0.0f } },
-				Vertex{ Vec4{ 0.5f, -0.5f, 0.5f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,1.0f } },
-				Vertex{ Vec4{ 0.5f, 0.5f, 0.5f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,0.0f } }
+				Vertex{ Vec4{ -1.0f, -1.0f, 1.0f, 1.0f },{ 1.0f,0.0f,0.0f,1.0f },{0.0f,1.0f} },
+				Vertex{ Vec4{ -1.0f, 1.0f, 1.0f, 1.0f },{ 0.0f,1.0f,0.0f,1.0f },{ 0.0f,0.0f } },
+				Vertex{ Vec4{ 1.0f, -1.0f, 1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,1.0f } },
+				Vertex{ Vec4{ 1.0f, 1.0f, 1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,0.0f } }
+
+
 			};
 
 			D3D11_BUFFER_DESC vdesc{};
@@ -271,10 +275,19 @@ namespace Ark {
 			const auto DELTA = DirectX::XMConvertToRadians(0.2f);
 			angleRadians += DELTA;
 			auto m = DirectX::XMMatrixRotationZ(angleRadians);
-			DirectX::XMStoreFloat4x4(&buff.Model, m);
-			//DirectX::XMStoreFloat4x4(&buff.View,DirectX::XMMatrixIdentity());
-			//DirectX::XMStoreFloat4x4(&buff.Projection, DirectX::XMMatrixIdentity());
+			buff.Model = m;
 
+			DirectX::XMVECTOR eye{ 0.0f,1.0f,-5.0f,0.0f };
+			DirectX::XMVECTOR at{ 0.0f,1.0f,0.0f,0.0f };
+			DirectX::XMVECTOR up{ 0.0f,1.0f,0.0f,0.0f };
+			buff.View = DirectX::XMMatrixLookAtLH(eye,at,up);
+
+			buff.Projection = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV2,rect.right/rect.bottom,0.01f,100.0f);
+
+			buff.Model = DirectX::XMMatrixTranspose(buff.Model);
+			buff.View = DirectX::XMMatrixTranspose(buff.View);
+			buff.Projection = DirectX::XMMatrixTranspose(buff.Projection);
+			
 			d3d11context->UpdateSubresource(constantbuffer.Get(), 0, nullptr, &buff, 0, 0);
 			d3d11context->VSSetConstantBuffers(0, 1, constantbuffer.GetAddressOf());
 			d3d11context->PSSetShaderResources(0,1,tex.resourceview.GetAddressOf());
