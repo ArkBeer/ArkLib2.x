@@ -233,7 +233,7 @@ namespace Ark {
 			InitDevice(hwnd);
 		}
 		void EndDraw() {
-			d3d11context->DrawIndexed(4, 0, 0);
+			d3d11context->DrawIndexed(6*6, 0, 0);
 			swapchain->Present(1, 0);
 		}
 		void DrawClear() {
@@ -241,12 +241,36 @@ namespace Ark {
 			d3d11context->ClearRenderTargetView(rendertarget.Get(), color.data());
 		}
 		void Draw(Texture& tex) {
-			std::array< Vertex, 4> vertices{
-				Vertex{ Vec4{ -1.0f, -1.0f, 1.0f, 1.0f },{ 1.0f,0.0f,0.0f,1.0f },{0.0f,1.0f} },
-				Vertex{ Vec4{ -1.0f, 1.0f, 1.0f, 1.0f },{ 0.0f,1.0f,0.0f,1.0f },{ 0.0f,0.0f } },
-				Vertex{ Vec4{ 1.0f, -1.0f, 1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,1.0f } },
-				Vertex{ Vec4{ 1.0f, 1.0f, 1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,0.0f } }
+			std::array< Vertex, 4*6> vertices{
+				Vertex{ Vec4{ -1.0f, -1.0f, -1.0f, 1.0f },{ 1.0f,0.0f,0.0f,1.0f },{0.0f,1.0f} },
+				Vertex{ Vec4{ -1.0f, -1.0f, 1.0f, 1.0f },{ 0.0f,1.0f,0.0f,1.0f },{ 0.0f,0.0f } },
+				Vertex{ Vec4{ -1.0f, 1.0f, 1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,0.0f } },
+				Vertex{ Vec4{ -1.0f, 1.0f, -1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,1.0f } },
 
+				Vertex{ Vec4{ 1.0f, -1.0f, -1.0f, 1.0f },{ 1.0f,0.0f,0.0f,1.0f },{ 0.0f,1.0f } },
+				Vertex{ Vec4{ 1.0f, 1.0f, -1.0f, 1.0f },{ 0.0f,1.0f,0.0f,1.0f },{ 1.0f,1.0f } },
+				Vertex{ Vec4{ 1.0f, 1.0f, 1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,0.0f } },
+				Vertex{ Vec4{ 1.0f, -1.0f, 1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 0.0f,0.0f } },
+
+				Vertex{ Vec4{ -1.0f, 1.0f, -1.0f, 1.0f },{ 1.0f,0.0f,0.0f,1.0f },{ 0.0f,1.0f } },
+				Vertex{ Vec4{ -1.0f, 1.0f, 1.0f, 1.0f },{ 0.0f,1.0f,0.0f,1.0f },{ 0.0f,0.0f } },
+				Vertex{ Vec4{ 1.0f, 1.0f, 1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,0.0f } },
+				Vertex{ Vec4{ 1.0f, 1.0f, -1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,1.0f } },
+
+				Vertex{ Vec4{ -1.0f, -1.0f, -1.0f, 1.0f },{ 1.0f,0.0f,0.0f,1.0f },{ 0.0f,1.0f } },
+				Vertex{ Vec4{ 1.0f, -1.0f, -1.0f, 1.0f },{ 0.0f,1.0f,0.0f,1.0f },{ 1.0f,1.0f } },
+				Vertex{ Vec4{ 1.0f, -1.0f, 1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,0.0f } },
+				Vertex{ Vec4{ -1.0f, -1.0f, 1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 0.0f,0.0f } },
+
+				Vertex{ Vec4{ -1.0f, -1.0f, -1.0f, 1.0f },{ 1.0f,0.0f,0.0f,1.0f },{ 0.0f,1.0f } },
+				Vertex{ Vec4{ -1.0f, 1.0f, -1.0f, 1.0f },{ 0.0f,1.0f,0.0f,1.0f },{ 0.0f,0.0f } },
+				Vertex{ Vec4{ 1.0f, 1.0f, -1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,0.0f } },
+				Vertex{ Vec4{ 1.0f, -1.0f, -1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,1.0f } },
+
+				Vertex{ Vec4{ -1.0f, -1.0f, 1.0f, 1.0f },{ 1.0f,0.0f,0.0f,1.0f },{ 0.0f,1.0f } },
+				Vertex{ Vec4{ 1.0f, -1.0f, 1.0f, 1.0f },{ 0.0f,1.0f,0.0f,1.0f },{ 1.0f,1.0f } },
+				Vertex{ Vec4{ 1.0f, 1.0f, 1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,0.0f } },
+				Vertex{ Vec4{ -1.0f, 1.0f, 1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 0.0f,0.0f } }
 
 			};
 
@@ -261,7 +285,14 @@ namespace Ark {
 			const UINT o = 0;
 			d3d11context->IASetVertexBuffers(0, 1, vertexbuffer.GetAddressOf(), &s, &o);
 
-			std::array<UINT, 4> indexes{ 0,1,2,3 };
+			std::array<UINT, 6*6> indexes{ 
+				0,1,2,2,3,0,
+				4,5,6,6,7,4,
+				8,9,10,10,11,8,
+				12,13,14,14,15,12,
+				16,17,18,18,19,16,
+				20,21,22,22,23,20
+			};
 			D3D11_BUFFER_DESC idesc{};
 			idesc.ByteWidth = sizeof(indexes);
 			idesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
@@ -269,13 +300,15 @@ namespace Ark {
 			idata.pSysMem = indexes.data();
 			d3d11device->CreateBuffer(&idesc, &idata, &indexbuffer);
 			d3d11context->IASetIndexBuffer(indexbuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
-			d3d11context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+			d3d11context->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 			
 			static float angleRadians = 0;
 			const auto DELTA = DirectX::XMConvertToRadians(0.2f);
 			angleRadians += DELTA;
 			auto m = DirectX::XMMatrixRotationZ(angleRadians);
-			buff.Model = m;
+			auto m2 = m*DirectX::XMMatrixRotationY(angleRadians*2);
+			auto m3 = m2*DirectX::XMMatrixRotationX(angleRadians*3);
+			buff.Model = m3;
 
 			DirectX::XMVECTOR eye{ 0.0f,1.0f,-5.0f,0.0f };
 			DirectX::XMVECTOR at{ 0.0f,1.0f,0.0f,0.0f };
