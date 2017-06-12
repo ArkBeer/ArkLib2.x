@@ -44,8 +44,12 @@ namespace Ark {
 		Microsoft::WRL::ComPtr<ID3D11Buffer> constantbuffer;
 		D3D_DRIVER_TYPE drivertype;
 		D3D_FEATURE_LEVEL featurelevel;
-		DirectX::XMFLOAT4X4 buff;
-
+		struct ConstantBuffer {
+			DirectX::XMFLOAT4X4 Model;
+			DirectX::XMFLOAT4X4 View;
+			DirectX::XMFLOAT4X4 Projection;
+		};
+		ConstantBuffer buff;
 		const auto CompileShaderFromFile(LPCTSTR szFileName, LPCSTR szEntryPoint, LPCSTR szShaderModel)
 		{
 			DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
@@ -179,7 +183,7 @@ namespace Ark {
 				}
 
 				D3D11_BUFFER_DESC cbdesc{};
-				cbdesc.ByteWidth = sizeof(DirectX::XMMATRIX);
+				cbdesc.ByteWidth = sizeof(ConstantBuffer);
 				cbdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 				d3d11device->CreateBuffer(&cbdesc, nullptr, &constantbuffer);
 
@@ -219,7 +223,7 @@ namespace Ark {
 				sdesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
 				sdesc.MaxLOD = D3D11_FLOAT32_MAX;
 				hr=d3d11device->CreateSamplerState(&sdesc, &tex.sampler);
-				//d3d11context->PSSetSamplers(0, 1, tex.sampler.GetAddressOf());
+				d3d11context->PSSetSamplers(0, 1, tex.sampler.GetAddressOf());
 			}
 			return tex;
 		}
@@ -267,7 +271,10 @@ namespace Ark {
 			const auto DELTA = DirectX::XMConvertToRadians(0.2f);
 			angleRadians += DELTA;
 			auto m = DirectX::XMMatrixRotationZ(angleRadians);
-			DirectX::XMStoreFloat4x4(&buff, m);
+			DirectX::XMStoreFloat4x4(&buff.Model, m);
+			//DirectX::XMStoreFloat4x4(&buff.View,DirectX::XMMatrixIdentity());
+			//DirectX::XMStoreFloat4x4(&buff.Projection, DirectX::XMMatrixIdentity());
+
 			d3d11context->UpdateSubresource(constantbuffer.Get(), 0, nullptr, &buff, 0, 0);
 			d3d11context->VSSetConstantBuffers(0, 1, constantbuffer.GetAddressOf());
 			d3d11context->PSSetShaderResources(0,1,tex.resourceview.GetAddressOf());

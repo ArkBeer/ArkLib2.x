@@ -26,7 +26,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 		fps.Count();
 		Ark::TstringStream tstr;
 		tstr << fps.perDuration<double>(s)<<"\n";
-		//OutputDebugString(tstr.str().c_str());
+		OutputDebugString(tstr.str().c_str());
 	}
 	return 0;
 }

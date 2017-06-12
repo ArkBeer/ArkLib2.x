@@ -14,13 +14,22 @@ struct VS_OUTPUT
 	float4 Color      : COLOR;
 	float2 Tex		  : TEXCOORD0;
 };
+cbuffer cb0 {
+	row_major matrix ModelMatrix;
+}
 
-matrix ModelMatrix;
+cbuffer cb1{
+	row_major matrix ViewMatrix;
+}
+cbuffer cb2 {
+	row_major matrix ProjectionMatrix;
+}
 
 VS_OUTPUT vsmain(VS_INPUT In)
 {
 	VS_OUTPUT Out;
 	Out.Position = mul(In.Position, ModelMatrix);
+	//Out.Position = mul(In.Position, mul(ModelMatrix, mul(ViewMatrix, ProjectionMatrix)));
 	Out.Color = In.Color;
 	Out.Tex = In.Tex;
 	return Out;
