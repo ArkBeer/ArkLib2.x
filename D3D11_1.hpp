@@ -42,6 +42,7 @@ namespace Ark {
 		Microsoft::WRL::ComPtr<ID3D11Buffer> vertexbuffer;
 		Microsoft::WRL::ComPtr<ID3D11Buffer> indexbuffer;
 		Microsoft::WRL::ComPtr<ID3D11Buffer> constantbuffer;
+		Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthstencilview;
 		D3D_DRIVER_TYPE drivertype;
 		D3D_FEATURE_LEVEL featurelevel;
 		struct ConstantBuffer {
@@ -136,7 +137,6 @@ namespace Ark {
 				swapchain->GetBuffer(0, __uuidof(ID3D11Texture2D), &backbuffer);
 
 				d3d11device->CreateRenderTargetView(backbuffer.Get(), nullptr, &rendertarget);
-				d3d11context->OMSetRenderTargets(1, rendertarget.GetAddressOf(), nullptr);
 
 				RECT r;
 				GetClientRect(hwnd, &r);
@@ -146,6 +146,8 @@ namespace Ark {
 				vp.TopLeftY = 0;
 				vp.Width = rect.right - rect.left;
 				vp.Height = rect.bottom - rect.top;
+				vp.MaxDepth = 1.0f;
+				vp.MinDepth = 0.0f;
 				d3d11context->RSSetViewports(1, &vp);
 
 				Microsoft::WRL::ComPtr<ID3DBlob> vsblob;
@@ -188,6 +190,23 @@ namespace Ark {
 				cbdesc.ByteWidth = sizeof(ConstantBuffer);
 				cbdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 				d3d11device->CreateBuffer(&cbdesc, nullptr, &constantbuffer);
+
+				Microsoft::WRL::ComPtr<ID3D11Texture2D> depthstencil;
+				D3D11_TEXTURE2D_DESC depthdesc{};
+				depthdesc.Width = rect.right;
+				depthdesc.Height = rect.bottom;
+				depthdesc.MipLevels = 1;
+				depthdesc.ArraySize = 1;
+				depthdesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+				depthdesc.SampleDesc.Count = 1;
+				depthdesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+				d3d11device->CreateTexture2D(&depthdesc,nullptr,&depthstencil);
+				D3D11_DEPTH_STENCIL_VIEW_DESC dsvdesc{};
+				dsvdesc.Format = depthdesc.Format;
+				dsvdesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
+				d3d11device->CreateDepthStencilView(depthstencil.Get(), &dsvdesc, &depthstencilview);
+				
+				d3d11context->OMSetRenderTargets(1, rendertarget.GetAddressOf(), depthstencilview.Get());
 
 				return true;
 			}
@@ -239,6 +258,7 @@ namespace Ark {
 		void DrawClear() {
 			const std::array<float, 4> color = { 0.0f,0.2f,0.4f,1.0f };
 			d3d11context->ClearRenderTargetView(rendertarget.Get(), color.data());
+			d3d11context->ClearDepthStencilView(depthstencilview.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 		}
 		void Draw(Texture& tex) {
 			std::array< Vertex, 4*6> vertices{

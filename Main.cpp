@@ -10,14 +10,14 @@ Ark::Key key;
 bool flag = true;
 int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow) {
 	Ark::WinClass wc(hInstance);
-	wc.AddStyle(WS_THICKFRAME).SetTitle(_T("Title")).SetSize(300,200);
+	wc.AddStyle(WS_THICKFRAME).SetTitle(_T("Title")).SetSize(600,600);
 	Ark::D3D11_1 d;
 	Ark::WIC w;
 	auto image=w.loadimage(_T("icon.png"));
 	Ark::D3D11_1::Texture tex;
 	while (!wc.EndFlag()) {
 		auto s = std::chrono::steady_clock::now();
-		wc.LockAspectRatio(9, 16);
+		wc.LockAspectRatio(1, 1);
 		d.BeginDraw(wc.GethWnd());
 		tex=d.createtexture(tex,image);
 		d.DrawClear();
