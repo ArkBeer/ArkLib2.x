@@ -50,7 +50,8 @@ namespace Ark {
 			DirectX::XMMATRIX View;
 			DirectX::XMMATRIX Projection;
 		};
-		ConstantBuffer buff;
+		DirectX::XMMATRIX View;
+		DirectX::XMMATRIX Projection;
 		RECT rect;
 		const auto CompileShaderFromFile(LPCTSTR szFileName, LPCSTR szEntryPoint, LPCSTR szShaderModel)
 		{
@@ -208,11 +209,18 @@ namespace Ark {
 				
 				d3d11context->OMSetRenderTargets(1, rendertarget.GetAddressOf(), depthstencilview.Get());
 
+				DirectX::XMVECTOR eye{ 0.0f,1.0f,-5.0f,0.0f };
+				DirectX::XMVECTOR at{ 0.0f,1.0f,0.0f,0.0f };
+				DirectX::XMVECTOR up{ 0.0f,1.0f,0.0f,0.0f };
+				View = DirectX::XMMatrixLookAtLH(eye, at, up);
+
+				Projection = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV2, rect.right / rect.bottom, 0.01f, 100.0f);
+
 				return true;
 			}
 			else return true;
 		}
-		auto& createtexture(Texture& tex,Ark::WIC::Image& i) {
+		void SetTexture(Texture& tex,Ark::WIC::Image& i) {
 			if (d3d11device && !tex.texture) {
 				D3D11_TEXTURE2D_DESC desc{};
 				desc.Width = i.getwidth();
@@ -246,13 +254,14 @@ namespace Ark {
 				hr=d3d11device->CreateSamplerState(&sdesc, &tex.sampler);
 				d3d11context->PSSetSamplers(0, 1, tex.sampler.GetAddressOf());
 			}
-			return tex;
 		}
 		void BeginDraw(HWND hwnd) {
+			RECT r;
+			GetClientRect(hwnd, &r);
+			//if (rect != r) { d3d11device.ReleaseAndGetAddressOf(); }
 			InitDevice(hwnd);
 		}
 		void EndDraw() {
-			d3d11context->DrawIndexed(6*6, 0, 0);
 			swapchain->Present(1, 0);
 		}
 		void DrawClear() {
@@ -260,9 +269,9 @@ namespace Ark {
 			d3d11context->ClearRenderTargetView(rendertarget.Get(), color.data());
 			d3d11context->ClearDepthStencilView(depthstencilview.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 		}
-		void Draw(Texture& tex) {
-			std::array< Vertex, 4*6> vertices{
-				Vertex{ Vec4{ -1.0f, -1.0f, -1.0f, 1.0f },{ 1.0f,0.0f,0.0f,1.0f },{0.0f,1.0f} },
+		void DrawCube(const DirectX::XMMATRIX matrix,const Texture& tex) {
+			std::array< Vertex, 4 * 6> vertices{
+				Vertex{ Vec4{ -1.0f, -1.0f, -1.0f, 1.0f },{ 1.0f,0.0f,0.0f,1.0f },{ 0.0f,1.0f } },
 				Vertex{ Vec4{ -1.0f, -1.0f, 1.0f, 1.0f },{ 0.0f,1.0f,0.0f,1.0f },{ 0.0f,0.0f } },
 				Vertex{ Vec4{ -1.0f, 1.0f, 1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,0.0f } },
 				Vertex{ Vec4{ -1.0f, 1.0f, -1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,1.0f } },
@@ -291,9 +300,7 @@ namespace Ark {
 				Vertex{ Vec4{ 1.0f, -1.0f, 1.0f, 1.0f },{ 0.0f,1.0f,0.0f,1.0f },{ 1.0f,1.0f } },
 				Vertex{ Vec4{ 1.0f, 1.0f, 1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,0.0f } },
 				Vertex{ Vec4{ -1.0f, 1.0f, 1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 0.0f,0.0f } }
-
 			};
-
 			D3D11_BUFFER_DESC vdesc{};
 			vdesc.ByteWidth = sizeof(vertices);
 			vdesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
@@ -305,7 +312,7 @@ namespace Ark {
 			const UINT o = 0;
 			d3d11context->IASetVertexBuffers(0, 1, vertexbuffer.GetAddressOf(), &s, &o);
 
-			std::array<UINT, 6*6> indexes{ 
+			std::array<UINT, 6 * 6> indexes{
 				0,1,2,2,3,0,
 				4,5,6,6,7,4,
 				8,9,10,10,11,8,
@@ -321,29 +328,30 @@ namespace Ark {
 			d3d11device->CreateBuffer(&idesc, &idata, &indexbuffer);
 			d3d11context->IASetIndexBuffer(indexbuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 			d3d11context->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-			
-			static float angleRadians = 0;
-			const auto DELTA = DirectX::XMConvertToRadians(0.2f);
-			angleRadians += DELTA;
-			auto m = DirectX::XMMatrixRotationZ(angleRadians);
-			auto m2 = m*DirectX::XMMatrixRotationY(angleRadians*2);
-			auto m3 = m2*DirectX::XMMatrixRotationX(angleRadians*3);
-			buff.Model = m3;
 
-			DirectX::XMVECTOR eye{ 0.0f,1.0f,-5.0f,0.0f };
-			DirectX::XMVECTOR at{ 0.0f,1.0f,0.0f,0.0f };
-			DirectX::XMVECTOR up{ 0.0f,1.0f,0.0f,0.0f };
-			buff.View = DirectX::XMMatrixLookAtLH(eye,at,up);
 
-			buff.Projection = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV2,rect.right/rect.bottom,0.01f,100.0f);
+			ConstantBuffer buff;
+			buff.Model = matrix;
+			buff.View = View;
+			buff.Projection = Projection;
 
 			buff.Model = DirectX::XMMatrixTranspose(buff.Model);
 			buff.View = DirectX::XMMatrixTranspose(buff.View);
 			buff.Projection = DirectX::XMMatrixTranspose(buff.Projection);
-			
+
+
 			d3d11context->UpdateSubresource(constantbuffer.Get(), 0, nullptr, &buff, 0, 0);
 			d3d11context->VSSetConstantBuffers(0, 1, constantbuffer.GetAddressOf());
-			d3d11context->PSSetShaderResources(0,1,tex.resourceview.GetAddressOf());
+			d3d11context->PSSetShaderResources(0, 1, tex.resourceview.GetAddressOf());
+
+			d3d11context->DrawIndexed(36, 0, 0);
+
+		}
+		void SetView(const DirectX::XMMATRIX& view) {
+			View = view;
+		}
+		auto GetView() {
+			return View;
 		}
 	};
 }
