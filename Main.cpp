@@ -14,13 +14,13 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 	Ark::D3D11_1 d;
 	Ark::WIC w;
 	Ark::Mouse m;
-	//auto image=w.loadimage(_T("icon.png"));
+	auto image=w.loadimage(_T("icon.png"));
 	Ark::D3D11_1::Texture tex;
 	while (!wc.EndFlag()) {
 		auto s = std::chrono::steady_clock::now();
 		wc.LockAspectRatio(2, 3);
 		d.BeginDraw(wc.GethWnd());
-		//d.SetTexture(tex,image);
+		d.SetTexture(tex,image);
 		d.DrawClear();
 		if(key.KeyCheck('W',true))d.SetView(d.GetView()*DirectX::XMMatrixTranslation(0,0,-0.1f));
 		if (key.KeyCheck('S', true))d.SetView(d.GetView()*DirectX::XMMatrixTranslation(0, 0, 0.1f));
