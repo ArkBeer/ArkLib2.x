@@ -10,15 +10,16 @@ Ark::Key key;
 bool flag = true;
 int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow) {
 	Ark::WinClass wc(hInstance);
-	wc.AddStyle(WS_THICKFRAME).SetTitle(_T("Title")).SetSize(800,1200);
+	wc.AddStyle(WS_THICKFRAME).SetTitle(_T("kuso")).SetSize(200,200);
 	Ark::D3D11_1 d;
 	Ark::WIC w;
 	Ark::Mouse m;
-	auto image=w.loadimage(_T("icon.png"));
+	auto image=w.loadimage(_T("texture.png"));
+
 	Ark::D3D11_1::Texture tex;
 	while (!wc.EndFlag()) {
 		auto s = std::chrono::steady_clock::now();
-		wc.LockAspectRatio(2, 3);
+		wc.LockAspectRatio(1, 1);
 		d.BeginDraw(wc.GethWnd());
 		d.SetTexture(tex,image);
 		d.DrawClear();
@@ -37,11 +38,54 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 			}
 		}else m = m.GetClientPosition(wc.GethWnd());
 
+		if (key.KeyCheck('1',false)) {
+			DirectX::XMVECTOR eye{ 0.0f,2.0f,0.0f,0.0f };
+			DirectX::XMVECTOR at{ 0.0f,0.0f,0.0f,0.0f };
+			DirectX::XMVECTOR up{ 0.0f,0.0f,1.0f,0.0f };
+			auto View = DirectX::XMMatrixLookAtLH(eye, at, up);
+			d.SetView(View);
+		}
+		if (key.KeyCheck('2', false)) {
+			DirectX::XMVECTOR eye{ 0.0f,0.0f,-2.0f,0.0f };
+			DirectX::XMVECTOR at{ 0.0f,0.0f,0.0f,0.0f };
+			DirectX::XMVECTOR up{ 0.0f,1.0f,0.0f,0.0f };
+			auto View = DirectX::XMMatrixLookAtLH(eye, at, up);
+			d.SetView(View);
+		}
+		if (key.KeyCheck('3', false)) {
+			DirectX::XMVECTOR eye{ 0.0f,-2.0f,0.0f,0.0f };
+			DirectX::XMVECTOR at{ 0.0f,0.0f,0.0f,0.0f };
+			DirectX::XMVECTOR up{ 0.0f,0.0f,1.0f,0.0f };
+			auto View = DirectX::XMMatrixLookAtLH(eye, at, up);
+			d.SetView(View);
+		}
+		if (key.KeyCheck('4', false)) {
+			DirectX::XMVECTOR eye{ 0.0f,0.0f,2.0f,0.0f };
+			DirectX::XMVECTOR at{ 0.0f,0.0f,0.0f,0.0f };
+			DirectX::XMVECTOR up{ 0.0f,1.0f,0.0f,0.0f };
+			auto View = DirectX::XMMatrixLookAtLH(eye, at, up);
+			d.SetView(View);
+		}
+		if (key.KeyCheck('5', false)) {
+			DirectX::XMVECTOR eye{ -2.0f,0.0f,0.0f,0.0f };
+			DirectX::XMVECTOR at{ 0.0f,0.0f,0.0f,0.0f };
+			DirectX::XMVECTOR up{ 0.0f,1.0f,0.0f,0.0f };
+			auto View = DirectX::XMMatrixLookAtLH(eye, at, up);
+			d.SetView(View);
+		}
+		if (key.KeyCheck('6', false)) {
+			DirectX::XMVECTOR eye{ 2.0f,0.0f,0.0f,0.0f };
+			DirectX::XMVECTOR at{ 0.0f,0.0f,0.0f,0.0f };
+			DirectX::XMVECTOR up{ 0.0f,1.0f,0.0f,0.0f };
+			auto View = DirectX::XMMatrixLookAtLH(eye, at, up);
+			d.SetView(View);
+		}
+
 		static float angle=0.0f;
 		d.DrawCube(DirectX::XMMatrixIdentity()/**DirectX::XMMatrixRotationX(angle)*DirectX::XMMatrixRotationY(angle*2)*DirectX::XMMatrixRotationZ(angle*3)*/,tex);
 		d.DrawCube(DirectX::XMMatrixIdentity()*DirectX::XMMatrixScaling(0.3,0.3,0.3)*DirectX::XMMatrixRotationZ(angle)*DirectX::XMMatrixTranslation(-4.0,0,0)*DirectX::XMMatrixRotationY(angle * 2)*DirectX::XMMatrixRotationX(angle * 3), tex);
 		angle += 0.01f;
-
+		
 		d.EndDraw();
 		fps.Count();
 		Ark::TstringStream tstr;

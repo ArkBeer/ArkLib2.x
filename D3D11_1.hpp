@@ -81,7 +81,67 @@ namespace Ark {
 			}
 			return DXGI_FORMAT_UNKNOWN;
 		}
+		const bool is_resized(HWND hwnd) {
+			RECT r;
+			GetClientRect(hwnd, &r);
+			return r != rect;
+		}
+		const bool initRect(HWND hwnd) {
+			Microsoft::WRL::ComPtr<IDXGIDevice2> dxgidevice;
+			d3d11device.As(&dxgidevice);
 
+			Microsoft::WRL::ComPtr<IDXGIAdapter> adapter;
+			dxgidevice->GetAdapter(&adapter);
+			Microsoft::WRL::ComPtr<IDXGIFactory2> factory;
+			adapter->GetParent(__uuidof(IDXGIFactory2), &factory);
+
+
+			DXGI_SWAP_CHAIN_DESC1 scdesc{};
+			scdesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+			scdesc.BufferCount = 2;
+			scdesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+			scdesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+			scdesc.SampleDesc.Count = 1;
+			factory->CreateSwapChainForHwnd(d3d11device.Get(), hwnd, &scdesc, nullptr, nullptr, &swapchain);
+
+			Microsoft::WRL::ComPtr<ID3D11Texture2D> backbuffer;
+			swapchain->GetBuffer(0, __uuidof(ID3D11Texture2D), &backbuffer);
+
+			d3d11device->CreateRenderTargetView(backbuffer.Get(), nullptr, &rendertarget);
+
+			RECT r;
+			GetClientRect(hwnd, &r);
+			rect = r;
+			D3D11_VIEWPORT vp{};
+			vp.TopLeftX = 0;
+			vp.TopLeftY = 0;
+			vp.Width = rect.right - rect.left;
+			vp.Height = rect.bottom - rect.top;
+			vp.MaxDepth = 1.0f;
+			vp.MinDepth = 0.0f;
+			d3d11context->RSSetViewports(1, &vp);
+
+			Microsoft::WRL::ComPtr<ID3D11Texture2D> depthstencil;
+			D3D11_TEXTURE2D_DESC depthdesc{};
+			depthdesc.Width = rect.right;
+			depthdesc.Height = rect.bottom;
+			depthdesc.MipLevels = 1;
+			depthdesc.ArraySize = 1;
+			depthdesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+			depthdesc.SampleDesc.Count = 1;
+			depthdesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+			d3d11device->CreateTexture2D(&depthdesc, nullptr, &depthstencil);
+			D3D11_DEPTH_STENCIL_VIEW_DESC dsvdesc{};
+			dsvdesc.Format = depthdesc.Format;
+			dsvdesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
+			d3d11device->CreateDepthStencilView(depthstencil.Get(), &dsvdesc, &depthstencilview);
+
+			d3d11context->OMSetRenderTargets(1, rendertarget.GetAddressOf(), depthstencilview.Get());
+
+			Projection = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV2, rect.right / rect.bottom, 0.01f, 100.0f);
+
+			return true;
+		}
 	public:
 		struct Texture {
 			Microsoft::WRL::ComPtr<ID3D11Texture2D> texture;
@@ -117,39 +177,9 @@ namespace Ark {
 
 				device.As(&d3d11device);
 				context.As(&d3d11context);
-				Microsoft::WRL::ComPtr<IDXGIDevice2> dxgidevice;
-				d3d11device.As(&dxgidevice);
 
-				Microsoft::WRL::ComPtr<IDXGIAdapter> adapter;
-				dxgidevice->GetAdapter(&adapter);
-				Microsoft::WRL::ComPtr<IDXGIFactory2> factory;
-				adapter->GetParent(__uuidof(IDXGIFactory2), &factory);
+				initRect(hwnd);
 
-
-				DXGI_SWAP_CHAIN_DESC1 scdesc{};
-				scdesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-				scdesc.BufferCount = 2;
-				scdesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-				scdesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-				scdesc.SampleDesc.Count = 1;
-				factory->CreateSwapChainForHwnd(device.Get(), hwnd, &scdesc, nullptr, nullptr, &swapchain);
-
-				Microsoft::WRL::ComPtr<ID3D11Texture2D> backbuffer;
-				swapchain->GetBuffer(0, __uuidof(ID3D11Texture2D), &backbuffer);
-
-				d3d11device->CreateRenderTargetView(backbuffer.Get(), nullptr, &rendertarget);
-
-				RECT r;
-				GetClientRect(hwnd, &r);
-				rect = r;
-				D3D11_VIEWPORT vp{};
-				vp.TopLeftX = 0;
-				vp.TopLeftY = 0;
-				vp.Width = rect.right - rect.left;
-				vp.Height = rect.bottom - rect.top;
-				vp.MaxDepth = 1.0f;
-				vp.MinDepth = 0.0f;
-				d3d11context->RSSetViewports(1, &vp);
 
 				Microsoft::WRL::ComPtr<ID3DBlob> vsblob;
 				Microsoft::WRL::ComPtr<ID3DBlob> psblob;
@@ -192,29 +222,16 @@ namespace Ark {
 				cbdesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 				d3d11device->CreateBuffer(&cbdesc, nullptr, &constantbuffer);
 
-				Microsoft::WRL::ComPtr<ID3D11Texture2D> depthstencil;
-				D3D11_TEXTURE2D_DESC depthdesc{};
-				depthdesc.Width = rect.right;
-				depthdesc.Height = rect.bottom;
-				depthdesc.MipLevels = 1;
-				depthdesc.ArraySize = 1;
-				depthdesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-				depthdesc.SampleDesc.Count = 1;
-				depthdesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-				d3d11device->CreateTexture2D(&depthdesc,nullptr,&depthstencil);
-				D3D11_DEPTH_STENCIL_VIEW_DESC dsvdesc{};
-				dsvdesc.Format = depthdesc.Format;
-				dsvdesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
-				d3d11device->CreateDepthStencilView(depthstencil.Get(), &dsvdesc, &depthstencilview);
-				
-				d3d11context->OMSetRenderTargets(1, rendertarget.GetAddressOf(), depthstencilview.Get());
-
-				DirectX::XMVECTOR eye{ 0.0f,1.0f,-5.0f,0.0f };
-				DirectX::XMVECTOR at{ 0.0f,1.0f,0.0f,0.0f };
+				/*DirectX::XMVECTOR eye{ 0.0f,0.0f,-2.0f,0.0f };
+				DirectX::XMVECTOR at{ 0.0f,0.0f,0.0f,0.0f };
 				DirectX::XMVECTOR up{ 0.0f,1.0f,0.0f,0.0f };
 				View = DirectX::XMMatrixLookAtLH(eye, at, up);
+				*/
+				DirectX::XMVECTOR eye{ 0.0f,2.0f,0.0f,0.0f };
+				DirectX::XMVECTOR at{ 0.0f,0.0f,0.0f,0.0f };
+				DirectX::XMVECTOR up{ 0.0f,0.0f,1.0f,0.0f };
+				View = DirectX::XMMatrixLookAtLH(eye, at, up);
 
-				Projection = DirectX::XMMatrixPerspectiveFovLH(DirectX::XM_PIDIV2, rect.right / rect.bottom, 0.01f, 100.0f);
 
 				return true;
 			}
@@ -258,8 +275,8 @@ namespace Ark {
 		void BeginDraw(HWND hwnd) {
 			RECT r;
 			GetClientRect(hwnd, &r);
-			//if (rect != r) { d3d11device.ReleaseAndGetAddressOf(); }
 			InitDevice(hwnd);
+			if (is_resized(hwnd)) { initRect(hwnd); }
 		}
 		void EndDraw() {
 			swapchain->Present(1, 0);
@@ -269,37 +286,37 @@ namespace Ark {
 			d3d11context->ClearRenderTargetView(rendertarget.Get(), color.data());
 			d3d11context->ClearDepthStencilView(depthstencilview.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 		}
-		void DrawCube(const DirectX::XMMATRIX matrix,const Texture& tex) {
+		void DrawCube(const DirectX::XMMATRIX& matrix, const Texture& tex,const std::array<Tex,24>& t) {
 			std::array< Vertex, 4 * 6> vertices{
-				Vertex{ Vec4{ -1.0f, -1.0f, -1.0f, 1.0f },{ 1.0f,0.0f,0.0f,1.0f },{ 0.0f,1.0f } },
-				Vertex{ Vec4{ -1.0f, -1.0f, 1.0f, 1.0f },{ 0.0f,1.0f,0.0f,1.0f },{ 0.0f,0.0f } },
-				Vertex{ Vec4{ -1.0f, 1.0f, 1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,0.0f } },
-				Vertex{ Vec4{ -1.0f, 1.0f, -1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,1.0f } },
+				Vertex{ Vec4{ -1.0f, -1.0f, -1.0f, 1.0f },{ 1.0f,1.0f,1.0f,1.0f },t.at(0) },
+				Vertex{ Vec4{ -1.0f, -1.0f, 1.0f, 1.0f },{ 1.0f,1.0f,1.0f,1.0f },t.at(1) },
+				Vertex{ Vec4{ -1.0f, 1.0f, 1.0f, 1.0f },{ 1.0f,1.0f,1.0f,1.0f } , t.at(2) },
+				Vertex{ Vec4{ -1.0f, 1.0f, -1.0f, 1.0f },{ 1.0f,1.0f,1.0f,1.0f } ,t.at(3) },
 
-				Vertex{ Vec4{ 1.0f, -1.0f, -1.0f, 1.0f },{ 1.0f,0.0f,0.0f,1.0f },{ 0.0f,1.0f } },
-				Vertex{ Vec4{ 1.0f, 1.0f, -1.0f, 1.0f },{ 0.0f,1.0f,0.0f,1.0f },{ 1.0f,1.0f } },
-				Vertex{ Vec4{ 1.0f, 1.0f, 1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,0.0f } },
-				Vertex{ Vec4{ 1.0f, -1.0f, 1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 0.0f,0.0f } },
+				Vertex{ Vec4{ 1.0f, -1.0f, -1.0f, 1.0f },{ 1.0f,1.0f,1.0f,1.0f },t.at(4) },
+				Vertex{ Vec4{ 1.0f, 1.0f, -1.0f, 1.0f },{ 1.0f,1.0f,1.0f,1.0f },t.at(5) },
+				Vertex{ Vec4{ 1.0f, 1.0f, 1.0f, 1.0f },{ 1.0f,1.0f,1.0f,1.0f } ,t.at(6) },
+				Vertex{ Vec4{ 1.0f, -1.0f, 1.0f, 1.0f },{ 1.0f,1.0f,1.0f,1.0f } ,t.at(7) },
 
-				Vertex{ Vec4{ -1.0f, 1.0f, -1.0f, 1.0f },{ 1.0f,0.0f,0.0f,1.0f },{ 0.0f,1.0f } },
-				Vertex{ Vec4{ -1.0f, 1.0f, 1.0f, 1.0f },{ 0.0f,1.0f,0.0f,1.0f },{ 0.0f,0.0f } },
-				Vertex{ Vec4{ 1.0f, 1.0f, 1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,0.0f } },
-				Vertex{ Vec4{ 1.0f, 1.0f, -1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,1.0f } },
+				Vertex{ Vec4{ -1.0f, 1.0f, -1.0f, 1.0f },{ 1.0f,1.0f,1.0f,1.0f },t.at(8) },
+				Vertex{ Vec4{ -1.0f, 1.0f, 1.0f, 1.0f },{ 1.0f,1.0f,1.0f,1.0f },t.at(9) },
+				Vertex{ Vec4{ 1.0f, 1.0f, 1.0f, 1.0f },{ 1.0f,1.0f,1.0f,1.0f } ,t.at(10) },
+				Vertex{ Vec4{ 1.0f, 1.0f, -1.0f, 1.0f },{ 1.0f,1.0f,1.0f,1.0f } ,t.at(11) },
 
-				Vertex{ Vec4{ -1.0f, -1.0f, -1.0f, 1.0f },{ 1.0f,0.0f,0.0f,1.0f },{ 0.0f,1.0f } },
-				Vertex{ Vec4{ 1.0f, -1.0f, -1.0f, 1.0f },{ 0.0f,1.0f,0.0f,1.0f },{ 1.0f,1.0f } },
-				Vertex{ Vec4{ 1.0f, -1.0f, 1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,0.0f } },
-				Vertex{ Vec4{ -1.0f, -1.0f, 1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 0.0f,0.0f } },
+				Vertex{ Vec4{ -1.0f, -1.0f, -1.0f, 1.0f },{ 1.0f,1.0f,1.0f,1.0f },t.at(12) },
+				Vertex{ Vec4{ 1.0f, -1.0f, -1.0f, 1.0f },{ 1.0f,1.0f,1.0f,1.0f },t.at(13) },
+				Vertex{ Vec4{ 1.0f, -1.0f, 1.0f, 1.0f },{ 1.0f,1.0f,1.0f,1.0f } ,t.at(14) },
+				Vertex{ Vec4{ -1.0f, -1.0f, 1.0f, 1.0f },{ 1.0f,1.0f,1.0f,1.0f } ,t.at(15) },
 
-				Vertex{ Vec4{ -1.0f, -1.0f, -1.0f, 1.0f },{ 1.0f,0.0f,0.0f,1.0f },{ 0.0f,1.0f } },
-				Vertex{ Vec4{ -1.0f, 1.0f, -1.0f, 1.0f },{ 0.0f,1.0f,0.0f,1.0f },{ 0.0f,0.0f } },
-				Vertex{ Vec4{ 1.0f, 1.0f, -1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,0.0f } },
-				Vertex{ Vec4{ 1.0f, -1.0f, -1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,1.0f } },
+				Vertex{ Vec4{ -1.0f, -1.0f, -1.0f, 1.0f },{ 1.0f,1.0f,1.0f,1.0f },t.at(16) },
+				Vertex{ Vec4{ -1.0f, 1.0f, -1.0f, 1.0f },{ 1.0f,1.0f,1.0f,1.0f },t.at(17) },
+				Vertex{ Vec4{ 1.0f, 1.0f, -1.0f, 1.0f },{ 1.0f,1.0f,1.0f,1.0f } ,t.at(18) },
+				Vertex{ Vec4{ 1.0f, -1.0f, -1.0f, 1.0f },{ 1.0f,1.0f,1.0f,1.0f } ,t.at(19) },
 
-				Vertex{ Vec4{ -1.0f, -1.0f, 1.0f, 1.0f },{ 1.0f,0.0f,0.0f,1.0f },{ 0.0f,1.0f } },
-				Vertex{ Vec4{ 1.0f, -1.0f, 1.0f, 1.0f },{ 0.0f,1.0f,0.0f,1.0f },{ 1.0f,1.0f } },
-				Vertex{ Vec4{ 1.0f, 1.0f, 1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 1.0f,0.0f } },
-				Vertex{ Vec4{ -1.0f, 1.0f, 1.0f, 1.0f },{ 0.0f,0.0f,1.0f,1.0f } ,{ 0.0f,0.0f } }
+				Vertex{ Vec4{ -1.0f, -1.0f, 1.0f, 1.0f },{ 1.0f,1.0f,1.0f,1.0f },t.at(20)},
+				Vertex{ Vec4{ 1.0f, -1.0f, 1.0f, 1.0f },{ 1.0f,1.0f,1.0f,1.0f },t.at(21) },
+				Vertex{ Vec4{ 1.0f, 1.0f, 1.0f, 1.0f },{ 1.0f,1.0f,1.0f,1.0f } ,t.at(22) },
+				Vertex{ Vec4{ -1.0f, 1.0f, 1.0f, 1.0f },{ 1.0f,1.0f,1.0f,1.0f } ,t.at(23) }
 			};
 			D3D11_BUFFER_DESC vdesc{};
 			vdesc.ByteWidth = sizeof(vertices);
@@ -346,12 +363,49 @@ namespace Ark {
 
 			d3d11context->DrawIndexed(36, 0, 0);
 
+
 		}
-		void SetView(const DirectX::XMMATRIX& view) {
-			View = view;
+		void DrawCube(const DirectX::XMMATRIX& matrix,const Texture& tex) {
+			std::array<Tex, 4 * 6> t{
+				Tex{ 0.333f,0.5f } ,
+				{ 0.0f,0.5f },
+				{ 0.0f,0.25f  },
+				{ 0.333f,0.25f  },
+
+				{ 0.667f,0.5f  },
+				{ 0.667f,0.25f  },
+				{ 1.0f,0.25f  },
+				{ 1.0f,0.5f } ,
+
+				{ 0.333f,0.25f  },
+				{ 0.333f,0.0f  },
+				{ 0.667f,0.0f } ,
+				{ 0.667f,0.25f  },
+
+				{ 0.667f,0.75f },
+				{ 0.333f,0.75f  },
+				{ 0.333f,0.5f } ,
+				{ 0.667f,0.5f } ,
+
+				{ 0.333f,0.5f } ,
+				{ 0.333f,0.25f } ,
+				{ 0.667f,0.25f } ,
+				{ 0.667f,0.5f },
+
+				{ 0.667f,1.0f } ,
+				{ 0.333f,1.0f } ,
+				{ 0.333f,0.75f } ,
+				{ 0.667f,0.75f } 
+			};
+			DrawCube(matrix, tex, t);
 		}
-		auto GetView() {
-			return View;
-		}
+#define SET(data) void Set##data(const DirectX::XMMATRIX& matrix){data=matrix;}
+#define GET(data) const auto Get##data(){return data;}
+		SET(View);
+		GET(View);
+		SET(Projection);
+		GET(Projection);
+#undef SET
+#undef GET
 	};
 }
