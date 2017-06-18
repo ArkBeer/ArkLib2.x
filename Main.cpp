@@ -3,7 +3,7 @@
 #include"WIC.hpp"
 #include<array>
 #include<vector>
-
+#include"Matrix.hpp"
 Ark::FrameRate fps;
 Ark::Random rnd;
 Ark::Key key;
@@ -33,7 +33,7 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 			if (!(m.x == m2.x && m.y == m2.y)) {
 				m2.x = m2.x - m.x;
 				m2.y = m2.y - m.y;
-				d.SetView(d.GetView()*DirectX::XMMatrixRotationY(-1.0f*m2.x/wc.GetSize().right*3.141592)*DirectX::XMMatrixRotationX(-1.0f*m2.y/wc.GetSize().bottom*3.141592));
+				d.SetView(Ark::Matrix(d.GetView()).RotationY(-1.0f*m2.x/wc.GetSize().right*3.141592).RotationX(-1.0f*m2.y/wc.GetSize().bottom*3.141592).GetMatrix());
 				m = m.GetClientPosition(wc.GethWnd());
 			}
 		}else m = m.GetClientPosition(wc.GethWnd());
@@ -80,10 +80,9 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdL
 			auto View = DirectX::XMMatrixLookAtLH(eye, at, up);
 			d.SetView(View);
 		}
-
 		static float angle=0.0f;
-		d.DrawCube(DirectX::XMMatrixIdentity()/**DirectX::XMMatrixRotationX(angle)*DirectX::XMMatrixRotationY(angle*2)*DirectX::XMMatrixRotationZ(angle*3)*/,tex);
-		d.DrawCube(DirectX::XMMatrixIdentity()*DirectX::XMMatrixScaling(0.3,0.3,0.3)*DirectX::XMMatrixRotationZ(angle)*DirectX::XMMatrixTranslation(-4.0,0,0)*DirectX::XMMatrixRotationY(angle * 2)*DirectX::XMMatrixRotationX(angle * 3), tex);
+		d.DrawCube(Ark::Matrix().Identity().GetMatrix(),tex);
+		d.DrawCube(Ark::Matrix().Identity().Scaling(0.3,0.3,0.3).RotationZ(angle).Translation(-4,0,0).RotationY(angle*2).RotationX(angle*3).GetMatrix(), tex);
 		angle += 0.01f;
 		
 		d.EndDraw();
