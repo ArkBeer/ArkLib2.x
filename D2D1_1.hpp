@@ -26,6 +26,7 @@ namespace Ark {
 		Microsoft::WRL::ComPtr<IDWriteTextFormat> IDWFormat;
 		Microsoft::WRL::ComPtr<ID2D1Factory1> D2DFactory;
 		RECT size;
+		HWND hwnd;
 		const bool CompareRect(const RECT& f, const RECT& s) {
 			if (f.bottom == s.bottom && f.left == s.left && f.right == s.right && f.top == s.top)return true;
 			else return false;
@@ -93,14 +94,14 @@ namespace Ark {
 			CoInitialize(nullptr);
 			DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory1), &IDWFactory);
 			CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_IWICImagingFactory, &IWICIFactory);
-
+			hwnd = nullptr;
 		}
 		~D2D1_1() {
 			IWICIFactory.ReleaseAndGetAddressOf();
 			CoUninitialize();
 		}
 		void BeginDraw() {
-			HWND hwnd = GetActiveWindow();
+			if (hwnd == nullptr) hwnd = GetActiveWindow();
 			if (CreateD2DResource(hwnd))D2DContext->BeginDraw();
 		}
 		void EndDraw() {

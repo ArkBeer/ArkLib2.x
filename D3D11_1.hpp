@@ -53,6 +53,7 @@ namespace Ark {
 		DirectX::XMMATRIX View;
 		DirectX::XMMATRIX Projection;
 		RECT rect;
+		HWND hwnd;
 		const auto CompileShaderFromFile(LPCTSTR szFileName, LPCSTR szEntryPoint, LPCSTR szShaderModel)
 		{
 			DWORD dwShaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
@@ -148,6 +149,9 @@ namespace Ark {
 			Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> resourceview;
 			Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler;
 		};
+		D3D11_1() {
+			hwnd = nullptr;
+		}
 		const bool InitDevice(HWND hwnd) {
 			if (!d3d11context || !d3d11device) {
 				Microsoft::WRL::ComPtr<ID3D11Device> device;
@@ -273,7 +277,7 @@ namespace Ark {
 			}
 		}
 		void BeginDraw() {
-			HWND hwnd = GetActiveWindow();
+			if (hwnd == nullptr) hwnd = GetActiveWindow();
 			RECT r;
 			GetClientRect(hwnd, &r);
 			InitDevice(hwnd);
