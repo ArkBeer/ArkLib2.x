@@ -99,7 +99,8 @@ namespace Ark {
 			IWICIFactory.ReleaseAndGetAddressOf();
 			CoUninitialize();
 		}
-		void BeginDraw(HWND hwnd) {
+		void BeginDraw() {
+			HWND hwnd = GetActiveWindow();
 			if (CreateD2DResource(hwnd))D2DContext->BeginDraw();
 		}
 		void EndDraw() {

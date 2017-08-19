@@ -26,23 +26,24 @@ namespace Ark {
 		static bool endflag;
 		const auto trans(const int x, const int y, const float xratio, const float yratio) {
 			std::pair<int, int> pair;
-			if (x / yratio == y) {
+			if (x / xratio == y) {
 				pair.first = x;
 				pair.second = y;
 			}
-			else if (x / yratio*xratio < y) {
+			else if (x / xratio*yratio < y) {
 				pair.first = x;
-				pair.second = x / yratio*xratio;
+				pair.second = x / xratio*yratio;
 			}
 			else {
-				pair.first = y / xratio * yratio;
+				pair.first = y / yratio * xratio;
 				pair.second = y;
 			}
 			return pair;
 		}
 	public:
-		WinClass(HINSTANCE hinst) :WinClass(hinst, CreateWndClassEx()) {}
-		WinClass(HINSTANCE hinst, WNDCLASSEX wex) {
+		WinClass() :WinClass(CreateWndClassEx()) {}
+		WinClass(WNDCLASSEX wex) {
+			HINSTANCE hinst = GetModuleHandle(nullptr);
 			ptr = this;
 			endflag = false;
 			WinMain_Arg.hInstance = hinst;

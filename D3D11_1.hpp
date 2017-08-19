@@ -272,7 +272,8 @@ namespace Ark {
 				d3d11context->PSSetSamplers(0, 1, tex.sampler.GetAddressOf());
 			}
 		}
-		void BeginDraw(HWND hwnd) {
+		void BeginDraw() {
+			HWND hwnd = GetActiveWindow();
 			RECT r;
 			GetClientRect(hwnd, &r);
 			InitDevice(hwnd);

@@ -1,21 +1,37 @@
 #pragma once
 namespace Ark {
 	class Key {
-		std::array<bool, 256> key_arr;
+		std::array<bool, 256> keyup_arr;
+		std::array<bool, 256> keydown_arr;
+
 	public:
 		Key() {
-			key_arr.fill(false);
+			keyup_arr.fill(false);
+			keydown_arr.fill(false);
 		}
-		const bool KeyCheck(const int key, const bool cond) {
+		const bool KeyDown(const int key, const bool cond) {
 			GetAsyncKeyState(key);
 			if (GetAsyncKeyState(key)) {
 				bool result;
-				result = cond ? true : (cond == key_arr[key] ? true : false);
-				key_arr[key] = true;
+				result = cond ? true : (cond == keydown_arr[key] ? true : false);
+				keydown_arr[key] = true;
 				return result;
 			}
-			else key_arr[key] = false;
+			else keydown_arr[key] = false;
 			return false;
+		}
+		const bool KeyUp(const int key) {
+			GetAsyncKeyState(key);
+			if (GetAsyncKeyState(key)) {
+				keyup_arr[key] = true;
+				return false;
+			}
+			else {
+				bool result;
+				result = keyup_arr[key];
+				keyup_arr[key] = false;
+				return result;
+			}
 		}
 	};
 }
