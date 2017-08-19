@@ -8,6 +8,7 @@ Ark::FrameRate fps;
 Ark::Random rnd;
 Ark::Key key;
 int Main();
+<<<<<<< HEAD
 bool flag = true;
 int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow) {
 	return Main();
@@ -64,6 +65,19 @@ int Main() {
 	Ark::D2D1_1 d;
 	Ark::WIC w;
 	Ark::Mouse m;
+=======
+bool flag = true; int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow) {
+	return Main();
+}
+int Main() {
+	Ark::WinClass wc(GetModuleHandle(nullptr));
+	wc.AddStyle(WS_THICKFRAME).SetTitle(_T("kuso")).SetSize(200,200);
+	Ark::D3D11_1 d;
+	Ark::WIC w;
+	Ark::Mouse m;
+	auto image=w.loadimage(_T("icon.png"));
+
+>>>>>>> origin/master
 	Ark::D3D11_1::Texture tex;
 	Ark::Key k;
 	bool flag = false;
@@ -133,6 +147,7 @@ int Main() {
 	auto s2 = std::chrono::steady_clock::now();
 	while (!wc.EndFlag()) {
 		auto s = std::chrono::steady_clock::now();
+<<<<<<< HEAD
 		wc.LockAspectRatio(16, 9);
 		d.BeginDraw();
 		d.DrawClear(RGB(200,200,200));
@@ -147,6 +162,33 @@ int Main() {
 					d.DrawRectangle(50+n*150, (it + 1)->y, 150+n*150, it->y, RGB(0, 120, 255), 0.5f);
 				}
 			}
+=======
+		wc.LockAspectRatio(1, 1);
+		d.BeginDraw(GetActiveWindow());
+		d.SetTexture(tex,image);
+		d.DrawClear();
+		if(key.KeyCheck('W',true))d.SetView(d.GetView()*DirectX::XMMatrixTranslation(0,0,-0.1f));
+		if (key.KeyCheck('S', true))d.SetView(d.GetView()*DirectX::XMMatrixTranslation(0, 0, 0.1f));
+		if (key.KeyCheck('D', true))d.SetView(d.GetView()*DirectX::XMMatrixTranslation(-0.1f, 0, 0));
+		if (key.KeyCheck('A', true))d.SetView(d.GetView()*DirectX::XMMatrixTranslation(0.1f, 0, 0));
+		if (key.KeyCheck(VK_LBUTTON,true)) {
+			Ark::Mouse m2;
+			m2 = m2.GetClientPosition(GetActiveWindow());
+			if (!(m.x == m2.x && m.y == m2.y)) {
+				m2.x = m2.x - m.x;
+				m2.y = m2.y - m.y;
+				d.SetView(Ark::Matrix(d.GetView()).RotationY(-1.0f*m2.x/wc.GetSize().right*3.141592).RotationX(-1.0f*m2.y/wc.GetSize().bottom*3.141592).GetMatrix());
+				m = m.GetClientPosition(GetActiveWindow());
+			}
+		}else m = m.GetClientPosition(GetActiveWindow());
+
+		if (key.KeyCheck('1',false)) {
+			DirectX::XMVECTOR eye{ 0.0f,2.0f,0.0f,0.0f };
+			DirectX::XMVECTOR at{ 0.0f,0.0f,0.0f,0.0f };
+			DirectX::XMVECTOR up{ 0.0f,0.0f,1.0f,0.0f };
+			auto View = DirectX::XMMatrixLookAtLH(eye, at, up);
+			d.SetView(View);
+>>>>>>> origin/master
 		}
 		Ark::TstringStream time;
 		time<< (std::chrono::steady_clock::now()-s2).count();
