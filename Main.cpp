@@ -3,12 +3,12 @@
 #include"WIC.hpp"
 #include<array>
 #include<vector>
+#include<fstream>
 #include"Matrix.hpp"
 Ark::FrameRate fps;
 Ark::Random rnd;
 Ark::Key key;
 int Main();
-<<<<<<< HEAD
 bool flag = true;
 int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow) {
 	return Main();
@@ -20,7 +20,10 @@ struct Notes {
 	};
 	State state;
 	enum class Type {
-		Single,Head,Tail
+		Normal,
+		Head,
+		Tail,
+		Simul
 	};
 	Type type;
 	float time;
@@ -32,16 +35,16 @@ struct Notes {
 		state = State::None;
 	
 	}
-	Notes(const float _time, const float _speed, const float _line):Notes(_time,_speed,_line,Type::Single) {
+	Notes(const float _time, const float _speed, const float _line):Notes(_time,_speed,_line,Type::Normal) {
 	}
 	void move() {
 		y += speed;
 	}
-	const float diff(const float line) {
+	const float diff() {
 		return y - line;
 	}
-	const float dist(const float line) {
-		return diff(line) > 0 ? diff(line) : -diff(line);
+	const float dist() {
+		return diff() > 0 ? diff() : -diff();
 	}
 	void init() {
 		y = line - fps.Fps * time*speed;
@@ -58,31 +61,36 @@ struct Notes {
 		IS(Miss)
 #undef IS
 };
+Notes::Type operator|(Notes::Type lt, Notes::Type rt) {
+	return static_cast<Notes::Type>(static_cast<int>(lt) | static_cast<int>(rt));
+}
+Notes::Type operator&(Notes::Type lt, Notes::Type rt) {
+	return static_cast<Notes::Type>(static_cast<int>(lt) & static_cast<int>(rt));
+}
+bool operator<<(Notes::Type lt, Notes::Type rt) {
+	return (lt&rt) == rt;
+}
 
+std::vector<std::vector<Notes>> readData(LPCTSTR lp) {
+	std::ifstream ifs;
+	ifs.open(lp,std::ios::in);
+	while (!ifs.eof()) {
+
+	}
+	return std::vector<std::vector<Notes>>();
+}
 int Main() {
 	Ark::WinClass wc;
 	wc.AddStyle(WS_THICKFRAME).SetTitle(_T("v0.01")).SetSize(1200,800);
 	Ark::D2D1_1 d;
 	Ark::WIC w;
 	Ark::Mouse m;
-=======
-bool flag = true; int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow) {
-	return Main();
-}
-int Main() {
-	Ark::WinClass wc(GetModuleHandle(nullptr));
-	wc.AddStyle(WS_THICKFRAME).SetTitle(_T("kuso")).SetSize(200,200);
-	Ark::D3D11_1 d;
-	Ark::WIC w;
-	Ark::Mouse m;
-	auto image=w.loadimage(_T("icon.png"));
-
->>>>>>> origin/master
 	Ark::D3D11_1::Texture tex;
 	Ark::Key k;
 	bool flag = false;
 	float line = wc.GetSize().bottom*3.0 / 4;
 	float width = wc.GetSize().right;
+	std::string pushkey = "SDFJKL";
 	std::vector<Notes> lane0{
 		Notes(2,6, line),
 		Notes(3,6, line),
@@ -132,63 +140,34 @@ int Main() {
 		Notes(7,6, line)
 	};
 
-	std::vector<std::vector<Notes>> vec{
+	std::vector<std::vector<Notes>> score{
 		lane0,lane1,lane2,lane3,lane4,lane5
 	};
 	std::array<std::vector<Notes>::iterator, 6> lanen = {
-		vec.begin()->begin() ,
-		(vec.begin() + 1)->begin() ,
-		(vec.begin() + 2)->begin(),
-		(vec.begin() + 3)->begin(),
-		(vec.begin() + 4)->begin(),
-		(vec.begin() + 5)->begin(),
+		score.begin()->begin() ,
+		(score.begin() + 1)->begin() ,
+		(score.begin() + 2)->begin(),
+		(score.begin() + 3)->begin(),
+		(score.begin() + 4)->begin(),
+		(score.begin() + 5)->begin(),
 
 	};
 	auto s2 = std::chrono::steady_clock::now();
 	while (!wc.EndFlag()) {
 		auto s = std::chrono::steady_clock::now();
-<<<<<<< HEAD
 		wc.LockAspectRatio(16, 9);
 		d.BeginDraw();
 		d.DrawClear(RGB(200,200,200));
 		d.DrawLine(0, wc.GetSize().bottom*3.0 / 4, 1200, wc.GetSize().bottom*3.0 / 4, RGB(255, 255, 255), 1.0f, 2);
-		for (auto it2 = vec.begin(); it2 != vec.end();++it2) {
-			auto& notes = *it2;
-			for (auto it = notes.begin(); it != notes.end(); ++it) {
-				int n=std::distance(vec.begin(),it2);
-				d.DrawEllipse(100+n*150, it->y, 50, 50, RGB(0, 120, 255), 1.0f);
-				d.DrawLine(50+n*150, it->y, 150+n*150, it->y, RGB(0, 0, 0), 1.0f, 2);
-				if (it->type == Notes::Type::Head) {
-					d.DrawRectangle(50+n*150, (it + 1)->y, 150+n*150, it->y, RGB(0, 120, 255), 0.5f);
+		for (auto it = score.begin(); it != score.end();++it) {
+			for (auto it2 = it->begin(); it2 != it->end();++it2) {
+				const int n = std::distance(score.begin(), it);
+				d.DrawEllipse(100+n*150,it2->y,50,50,RGB(0,120,255),1.0f);
+				d.DrawLine(50 + n * 150, it2->y, 150 + n * 150, it2->y, RGB(0, 0, 0), 1.0f, 2);
+				if (it2->type==Notes::Type::Head) {
+					d.DrawRectangle(50+n*150,(it2+1)->y,150+n*150,it2->y,RGB(0,120,255),0.5f);
 				}
 			}
-=======
-		wc.LockAspectRatio(1, 1);
-		d.BeginDraw(GetActiveWindow());
-		d.SetTexture(tex,image);
-		d.DrawClear();
-		if(key.KeyCheck('W',true))d.SetView(d.GetView()*DirectX::XMMatrixTranslation(0,0,-0.1f));
-		if (key.KeyCheck('S', true))d.SetView(d.GetView()*DirectX::XMMatrixTranslation(0, 0, 0.1f));
-		if (key.KeyCheck('D', true))d.SetView(d.GetView()*DirectX::XMMatrixTranslation(-0.1f, 0, 0));
-		if (key.KeyCheck('A', true))d.SetView(d.GetView()*DirectX::XMMatrixTranslation(0.1f, 0, 0));
-		if (key.KeyCheck(VK_LBUTTON,true)) {
-			Ark::Mouse m2;
-			m2 = m2.GetClientPosition(GetActiveWindow());
-			if (!(m.x == m2.x && m.y == m2.y)) {
-				m2.x = m2.x - m.x;
-				m2.y = m2.y - m.y;
-				d.SetView(Ark::Matrix(d.GetView()).RotationY(-1.0f*m2.x/wc.GetSize().right*3.141592).RotationX(-1.0f*m2.y/wc.GetSize().bottom*3.141592).GetMatrix());
-				m = m.GetClientPosition(GetActiveWindow());
-			}
-		}else m = m.GetClientPosition(GetActiveWindow());
-
-		if (key.KeyCheck('1',false)) {
-			DirectX::XMVECTOR eye{ 0.0f,2.0f,0.0f,0.0f };
-			DirectX::XMVECTOR at{ 0.0f,0.0f,0.0f,0.0f };
-			DirectX::XMVECTOR up{ 0.0f,0.0f,1.0f,0.0f };
-			auto View = DirectX::XMMatrixLookAtLH(eye, at, up);
-			d.SetView(View);
->>>>>>> origin/master
 		}
 		Ark::TstringStream time;
 		time<< (std::chrono::steady_clock::now()-s2).count();
@@ -197,64 +176,71 @@ int Main() {
 		}
 		if (!flag) {
 				s2 = std::chrono::steady_clock::now();
-				for (auto& notes:vec) {
+				for (auto& notes:score) {
 					for (auto& v : notes) { v.init(); }
 				}
 				lanen = {
-					vec.begin()->begin() ,
-					(vec.begin() + 1)->begin() ,
-					(vec.begin() + 2)->begin(),
-					(vec.begin() + 3)->begin(),
-					(vec.begin() + 4)->begin(),
-					(vec.begin() + 5)->begin(),
-
+					score.begin()->begin() ,
+					(score.begin() + 1)->begin() ,
+					(score.begin() + 2)->begin(),
+					(score.begin() + 3)->begin(),
+					(score.begin() + 4)->begin(),
+					(score.begin() + 5)->begin(),
 				};
 
 		}
 		if (flag) {
-			for (auto& notes:vec) {
+			for (auto& notes:score) {
 				for (auto& v : notes) {
 					v.move();
 				}
 			}
 		}
-		std::string pushkey = "SDFJKL";
-		for (int i = 0; i < 6;++i) {
-			auto& n = lanen.at(i);
-			auto& notes = vec.at(i);
-			if (n != notes.end()) {
-				if (n->diff(line) <= 100) {
-					if (n->type != Notes::Type::Tail) {
+		for (int i = 0; i < lanen.size();++i) {
+			auto& it = lanen.at(i);
+			auto& lane = score.at(i);
+			if (it != lane.end()) {
+				if (it->diff()<=100) {
+					if (it->type != Notes::Type::Tail) {
 						if (key.KeyDown(pushkey.at(i), false)) {
-							if (n->dist(line) <= 100) {
-								n->as_Good();
-								n += 1;
+							if (it->dist()<=100) {
+								it->as_Good();
+								++it;
 							}
-							else
-								if (n->dist(line) <= 150) {
-									n->as_Miss();
-									n += 1;
-								}
+							else if(it->dist()<=150) {
+								it->as_Miss();
+								++it;
+							}
 						}
 					}
 					else {
-						if (key.KeyUp(pushkey.at(i))) {
-							if (n->dist(line) <= 100 && (n-1)->is_Good()) {
-								n->as_Good();
-								n += 1;
+						if ((it - 1)->is_Good()) {
+							if (key.KeyUp(pushkey.at(i))) {
+								if (it->dist() <= 100) {
+									it->as_Good();
+									++it;
+								}
+								else {
+									it->as_Miss();
+									++it;
+								}
 							}
+						}
+						else {
+							it->as_Miss();
+							++it;
 						}
 					}
 				}
 				else {
-					n->as_Miss();
-					n += 1;
+					it->as_Miss();
+					++it;
 				}
 			}
 		}
 		d.DrawString(0, 0, time.str().c_str(),0x000000, 1.0f, 10);
 		int c = 0;
-		for (const auto& notes:vec) {
+		for (const auto& notes:score) {
 		Ark::TstringStream result;
 			for (const auto& v : notes) {
 				if (v.is_Good())result << "Good\n";
